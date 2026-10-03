@@ -94,6 +94,164 @@
       outline: 2px dashed #C86D51;
       outline-offset: 4px;
     }
+
+    /* Mobile-first refinements */
+    #canvas-area {
+      overscroll-behavior: contain;
+    }
+
+    #canvas-controls button {
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 767px) {
+      body {
+        padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+      }
+
+      main {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        padding-top: 16px !important;
+        padding-bottom: 24px !important;
+      }
+
+      .nav-btn {
+        min-height: 46px;
+      }
+
+      .nav-btn span {
+        font-size: 10px;
+      }
+
+      #tab-canvas > div:first-child {
+        gap: 12px;
+      }
+
+      #tab-canvas > div:first-child > div:last-child {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      #tab-canvas > div:first-child > div:last-child button {
+        min-height: 44px;
+        justify-content: center;
+      }
+
+      #canvas-area {
+        height: min(62dvh, 560px) !important;
+        min-height: 360px;
+        border-radius: 24px;
+      }
+
+      #canvas-placeholder {
+        max-width: 260px;
+      }
+
+      #canvas-placeholder i {
+        width: 42px;
+        height: 42px;
+      }
+
+      #canvas-controls {
+        position: relative;
+        margin-top: 4px;
+        padding: 8px;
+        gap: 8px;
+        border-radius: 18px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      #canvas-controls > span {
+        font-size: 11px;
+        padding: 2px 4px;
+      }
+
+      #canvas-controls > div {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 6px;
+        width: 100%;
+      }
+
+      #canvas-controls button {
+        width: 100%;
+        min-width: 0;
+        min-height: 46px;
+        border-radius: 14px;
+      }
+
+      #canvas-catalog {
+        height: auto !important;
+        max-height: 210px;
+        min-height: 178px;
+      }
+
+      #canvas-item-picker {
+        display: grid !important;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(112px, 128px);
+        grid-template-rows: 1fr;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 8px;
+        padding-bottom: 4px;
+        scroll-snap-type: x proximity;
+      }
+
+      #canvas-item-picker > button {
+        min-height: 146px;
+        scroll-snap-align: start;
+      }
+
+      #canvas-item-picker img {
+        width: 76px;
+        height: 76px;
+      }
+
+      #saved-outfits-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      #saved-outfits-grid > div {
+        border-radius: 22px;
+      }
+
+      .canvas-element {
+        -webkit-user-select: none;
+        user-select: none;
+      }
+    }
+
+    @media (max-width: 390px) {
+      #canvas-area {
+        height: min(58dvh, 480px) !important;
+        min-height: 320px;
+      }
+
+      #canvas-controls > div {
+        gap: 4px;
+      }
+
+      #canvas-controls button {
+        min-height: 44px;
+        border-radius: 12px;
+      }
+    }
+
+    @media (min-width: 768px) {
+      #canvas-area {
+        height: clamp(500px, 64vh, 680px);
+      }
+    }
+
   </style>
 </head>
 <body class="min-h-full flex flex-col pb-24 md:pb-0 md:pl-64 antialiased">
@@ -151,9 +309,15 @@
       <div class="bg-linen p-3 rounded-2xl border border-warmBorder flex items-center justify-between">
         <div>
           <p class="text-[10px] text-taupe font-medium uppercase tracking-wider">Погода за окном</p>
-          <p id="weather-desc" class="text-xs font-semibold text-charcoal mt-0.5">+18°C, Ясно</p>
+          <p id="weather-desc" class="text-xs font-semibold text-charcoal mt-0.5">Загрузка погоды…</p>
+          <p id="weather-location" class="text-[10px] text-taupe mt-0.5">Юнтолово, Санкт-Петербург</p>
+          <p id="weather-updated" class="text-[9px] text-taupe mt-0.5">Обновление…</p>
+         <div class="flex items-center gap-1.5 mt-2">
+           <button onclick="updateWeather()" class="px-2 py-1 bg-sand hover:bg-warmBorder text-charcoal rounded-lg text-[9px] font-semibold">Обновить</button>
+           <button onclick="recommendOutfitByWeather()" class="px-2 py-1 bg-terracotta text-white rounded-lg text-[9px] font-semibold">Что надеть</button>
+         </div>
         </div>
-        <i data-lucide="sun" class="w-5 h-5 text-amber-500"></i>
+         <i id="weather-icon" data-lucide="cloud-sun" class="w-5 h-5 text-amber-500"></i>
       </div>
 
       <div class="flex items-center justify-between text-xs text-taupe px-1">
@@ -179,7 +343,7 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 class="text-2xl md:text-3xl font-bold text-charcoal">Мой Гардероб</h2>
-          <p class="text-xs md:text-sm text-taupe mt-1">Оцифровано вещей: <span id="stat-total-count" class="font-semibold text-charcoal">0</span> • Капитализация шкафа: <span id="stat-total-value" class="font-semibold text-charcoal">0 ₽</span></p>
+          <p class="text-xs md:text-sm text-taupe mt-1">Оцифровано вещей: <span id="stat-total-count" class="font-semibold text-charcoal">0</span></p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <button onclick="openModal('modal-add-item')" class="flex items-center gap-2 px-4 py-2.5 bg-terracotta hover:bg-terracottaHover text-white rounded-xl shadow-sm text-xs md:text-sm font-medium transition-all">
@@ -211,8 +375,9 @@
           </select>
           <select id="wardrobe-sort" onchange="filterWardrobe()" class="px-3 py-2 bg-linen rounded-xl border border-warmBorder text-xs md:text-sm focus:outline-none text-charcoal">
             <option value="newest">Сначала новые</option>
-            <option value="wears">По носке (часто)</option>
-            <option value="price">По цене</option>
+            <option value="popular">Самые популярные</option>
+            <option value="season">По сезону</option>
+            <option value="category">По категории</option>
           </select>
         </div>
 
@@ -225,6 +390,10 @@
           <button onclick="setCategoryFilter('Верхняя одежда')" class="cat-pill px-3.5 py-1.5 rounded-full bg-linen text-taupe hover:text-charcoal border border-warmBorder transition-all whitespace-nowrap">Верхняя одежда</button>
           <button onclick="setCategoryFilter('Обувь')" class="cat-pill px-3.5 py-1.5 rounded-full bg-linen text-taupe hover:text-charcoal border border-warmBorder transition-all whitespace-nowrap">Обувь</button>
           <button onclick="setCategoryFilter('Аксессуары')" class="cat-pill px-3.5 py-1.5 rounded-full bg-linen text-taupe hover:text-charcoal border border-warmBorder transition-all whitespace-nowrap">Аксессуары & Сумки</button>
+          <button id="favorites-filter" onclick="toggleFavoritesFilter()" class="cat-pill px-3.5 py-1.5 rounded-full bg-linen text-taupe hover:text-charcoal border border-warmBorder transition-all whitespace-nowrap flex items-center gap-1.5">
+            <i data-lucide="heart" class="w-3.5 h-3.5"></i>
+            Избранное
+          </button>
         </div>
       </div>
 
@@ -280,10 +449,10 @@
         </div>
 
         <!-- Sidebar Wardrobe Selector (Right 4 cols) -->
-        <div class="lg:col-span-4 bg-warmCard p-4 rounded-3xl border border-warmBorder space-y-3 h-[540px] flex flex-col">
+        <div id="canvas-catalog" class="lg:col-span-4 bg-warmCard p-4 rounded-3xl border border-warmBorder space-y-3 h-[540px] flex flex-col">
           <h3 class="font-bold text-sm text-charcoal flex items-center justify-between">
             <span>Каталог вещей</span>
-            <span class="text-[10px] font-normal text-taupe">Клик добавляет на холст</span>
+            <span class="text-[10px] font-normal text-taupe">Нажмите — добавит на холст</span>
           </h3>
           <div id="canvas-item-picker" class="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pr-1">
             <!-- Items rendered here for fast clicking -->
@@ -344,7 +513,7 @@
             <h3 class="font-bold text-base text-charcoal">Генератор Образов по Поводу</h3>
             <p class="text-xs text-taupe mt-1">Укажите повод и погоду — ИИ мгновенно соберет гармоничный комплект из имеющихся вещей.</p>
           </div>
-          <button onclick="openModal('modal-ai-generator')" class="w-full py-2.5 bg-terracotta text-white hover:bg-terracottaHover rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
+          <button onclick="syncWeatherInput(); openModal('modal-ai-generator')" class="w-full py-2.5 bg-terracotta text-white hover:bg-terracottaHover rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
             <span>Сгенерировать комплект</span>
             <i data-lucide="sparkles" class="w-4 h-4"></i>
           </button>
@@ -409,8 +578,23 @@
             <i data-lucide="scan-face" class="w-4 h-4"></i>
           </button>
         </div>
-      </div>
 
+        <!-- Tool 7: Weather-Based Wardrobe Recommendation -->
+        <div class="bg-warmCard p-5 rounded-3xl border border-warmBorder card-hover flex flex-col justify-between space-y-4">
+          <div>
+            <div class="w-10 h-10 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center mb-3">
+              <i data-lucide="cloud-sun" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-base text-charcoal">Что надеть по погоде</h3>
+            <p class="text-xs text-taupe mt-1">Актуальная погода для Юнтолово + ваши вещи. Подбор учитывает температуру, осадки, ветер и сезон вещи.</p>
+          </div>
+          <button onclick="recommendOutfitByWeather()" class="w-full py-2.5 bg-terracotta text-white hover:bg-terracottaHover rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
+            <span>Подобрать образ сейчас</span>
+            <i data-lucide="shirt" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+      </div>
       <!-- AI Interactive Results Output Box -->
       <div id="ai-results-output" class="hidden bg-warmCard p-6 rounded-3xl border border-warmBorder shadow-sm space-y-4">
         <div class="flex items-center justify-between border-b border-warmBorder pb-3">
@@ -429,31 +613,7 @@
     <section id="tab-analytics" class="tab-content hidden space-y-6">
       <div>
         <h2 class="text-2xl md:text-3xl font-bold text-charcoal">Аналитика Гардероба</h2>
-        <p class="text-xs md:text-sm text-taupe mt-1">Метрики эффективности, стоимость носки (CPW) и частота использования</p>
-      </div>
-
-      <!-- Key KPI Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder shadow-sm">
-          <p class="text-xs text-taupe font-medium">Общая стоимость</p>
-          <p id="kpi-total-val" class="text-xl font-bold text-charcoal mt-1">0 ₽</p>
-          <p class="text-[10px] text-emerald-600 mt-1 flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3"></i> Капитализация шкафа</p>
-        </div>
-        <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder shadow-sm">
-          <p class="text-xs text-taupe font-medium">Средняя CPW</p>
-          <p id="kpi-avg-cpw" class="text-xl font-bold text-charcoal mt-1">0 ₽/выход</p>
-          <p class="text-[10px] text-taupe mt-1">Стоимость одного выхода</p>
-        </div>
-        <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder shadow-sm">
-          <p class="text-xs text-taupe font-medium">Любимая вещь</p>
-          <p id="kpi-top-item" class="text-sm font-bold text-charcoal mt-1 line-clamp-1">—</p>
-          <p id="kpi-top-wears" class="text-[10px] text-terracotta mt-1">0 носок</p>
-        </div>
-        <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder shadow-sm">
-          <p class="text-xs text-taupe font-medium">Забытые вещи</p>
-          <p id="kpi-unused-count" class="text-xl font-bold text-charcoal mt-1">0</p>
-          <p class="text-[10px] text-amber-600 mt-1">Редко надеваются</p>
-        </div>
+        <p class="text-xs md:text-sm text-taupe mt-1">Распределение гардероба и рекомендации</p>
       </div>
 
       <!-- Analytics Visual Breakdowns -->
@@ -474,7 +634,7 @@
           </h3>
           <div id="analytics-insights-list" class="space-y-2 text-xs text-taupe">
             <p class="p-3 bg-linen rounded-2xl border border-warmBorder text-charcoal">
-              💡 Добавляйте цены и количество носок у вещей, чтобы видеть точную окупаемость каждого выхода.
+              💡 Добавляйте категории, сезоны и цвета вещей — так рекомендации и капсулы будут точнее.
             </p>
           </div>
         </div>
@@ -524,7 +684,27 @@
           <div class="grid grid-cols-2 gap-4 text-xs">
             <div>
               <label class="block text-taupe mb-1">Рост (см)</label>
-              <input type="number" id="user-height" value="168" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
+              <input type="number" id="user-height" min="100" max="250" value="168" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
+            </div>
+            <div>
+              <label class="block text-taupe mb-1">Вес (кг)</label>
+              <input type="number" id="user-weight" min="30" max="250" step="0.1" placeholder="Например, 58" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
+            </div>
+            <div>
+              <label class="block text-taupe mb-1">Грудь (см)</label>
+              <input type="number" id="user-bust" min="50" max="180" step="0.5" placeholder="Например, 88" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
+            </div>
+            <div>
+              <label class="block text-taupe mb-1">Талия (см)</label>
+              <input type="number" id="user-waist" min="40" max="160" step="0.5" placeholder="Например, 68" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
+            </div>
+            <div>
+              <label class="block text-taupe mb-1">Бёдра (см)</label>
+              <input type="number" id="user-hips" min="60" max="180" step="0.5" placeholder="Например, 96" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
+            </div>
+            <div>
+              <label class="block text-taupe mb-1">Длина стопы (см)</label>
+              <input type="number" id="user-foot-length" min="15" max="35" step="0.1" placeholder="Например, 24.5" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
             </div>
             <div>
               <label class="block text-taupe mb-1">Тип фигуры</label>
@@ -538,7 +718,7 @@
             </div>
             <div>
               <label class="block text-taupe mb-1">Размер одежды</label>
-              <input type="text" id="user-size" value="S (42-44)" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
+              <input type="text" id="user-size" value="S (42-44)" placeholder="Можно уточнить позже" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
             </div>
             <div>
               <label class="block text-taupe mb-1">Предпочитаемый стиль</label>
@@ -549,6 +729,18 @@
                 <option value="Business Chic">Business Chic</option>
                 <option value="Boho Chic">Boho Chic</option>
               </select>
+            </div>
+          </div>
+
+          <div class="bg-linen p-3.5 rounded-2xl border border-warmBorder">
+            <p class="text-xs font-semibold text-charcoal">Для покупок в интернете</p>
+            <p class="text-[11px] text-taupe mt-1 leading-relaxed">
+              Вес, мерки груди / талии / бёдер и длина стопы сохраняются в профиле. Когда у онлайн-вещи есть размерная сетка бренда, эти данные можно использовать для подбора подходящего размера одежды и обуви.
+            </p>
+            <div class="mt-2 flex flex-wrap gap-1.5 text-[10px] text-charcoal">
+              <span class="px-2 py-1 rounded-full bg-warmCard border border-warmBorder">Одежда: грудь · талия · бёдра</span>
+              <span class="px-2 py-1 rounded-full bg-warmCard border border-warmBorder">Обувь: длина стопы</span>
+              <span class="px-2 py-1 rounded-full bg-warmCard border border-warmBorder">Доп. ориентир: рост · вес</span>
             </div>
           </div>
 
@@ -658,10 +850,7 @@
             <label class="block text-taupe mb-1">Бренд</label>
             <input type="text" id="new-item-brand" placeholder="ZARA, Massimo Dutti..." class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm">
           </div>
-          <div>
-            <label class="block text-taupe mb-1">Стоимость (₽)</label>
-            <input type="number" id="new-item-price" placeholder="12000" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm">
-          </div>
+
         </div>
       </div>
 
@@ -712,7 +901,8 @@
         </div>
         <div>
           <label class="block text-taupe mb-1">Погода и Температура</label>
-          <input type="text" id="gen-weather" value="+18°C, Переменная облачность" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm">
+          <input type="text" id="gen-weather" value="Загрузка погоды…" readonly class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm">
+          <button onclick="updateWeather()" class="mt-2 px-3 py-1.5 bg-sand hover:bg-warmBorder text-charcoal rounded-xl text-[10px] font-semibold">Обновить текущую погоду</button>
         </div>
       </div>
       <button onclick="runAiGenerator()" class="w-full py-2.5 bg-terracotta text-white rounded-xl text-xs font-semibold hover:bg-terracottaHover flex items-center justify-center gap-2">
@@ -783,6 +973,11 @@
       calendar: {},
       profile: {
         height: 168,
+        weight: null,
+        bust: null,
+        waist: null,
+        hips: null,
+        footLength: null,
         bodyShape: 'Песочные часы',
         size: 'S (42-44)',
         stylePref: 'Casual Minimalist',
@@ -790,7 +985,14 @@
         apiKey: ''
       },
       currentCategory: 'all',
+      favoritesOnly: false,
       canvasItems: [],
+      weather: {
+        location: 'Юнтолово, Санкт-Петербург', latitude: 60.0305, longitude: 30.1334,
+        timezone: 'Europe/Moscow', temperature: null, apparentTemperature: null,
+        precipitation: 0, rain: 0, showers: 0, snowfall: 0, windSpeed: 0, windGusts: 0,
+        weatherCode: null, description: 'Загрузка погоды…', dailyRainChance: 0, updatedAt: null
+      },
       selectedCanvasItemId: null
     };
 
@@ -803,8 +1005,6 @@
         color: 'Бежевый',
         season: 'Демисезон',
         brand: 'Massimo Dutti',
-        price: 18000,
-        wears: 14,
         img: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&auto=format&fit=crop&q=80'
       },
       {
@@ -814,8 +1014,6 @@
         color: 'Молочный',
         season: 'Всесезон',
         brand: 'ZARA',
-        price: 4500,
-        wears: 22,
         img: 'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=400&auto=format&fit=crop&q=80'
       },
       {
@@ -825,8 +1023,6 @@
         color: 'Синий',
         season: 'Всесезон',
         brand: 'Mango',
-        price: 5900,
-        wears: 30,
         img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=400&auto=format&fit=crop&q=80'
       },
       {
@@ -836,8 +1032,6 @@
         color: 'Черный',
         season: 'Демисезон',
         brand: '12 Storeez',
-        price: 14900,
-        wears: 18,
         img: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&auto=format&fit=crop&q=80'
       },
       {
@@ -847,8 +1041,6 @@
         color: 'Шалфейный',
         season: 'Осень',
         brand: 'COS',
-        price: 12000,
-        wears: 8,
         img: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&auto=format&fit=crop&q=80'
       },
       {
@@ -858,8 +1050,6 @@
         color: 'Темно-серый',
         season: 'Демисезон',
         brand: 'Lime',
-        price: 6900,
-        wears: 12,
         img: 'https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?w=400&auto=format&fit=crop&q=80'
       }
     ];
@@ -867,16 +1057,21 @@
     // Initialize App
     document.addEventListener('DOMContentLoaded', () => {
       loadState();
+      syncProfileForm();
       if (APP_STATE.items.length === 0) {
         APP_STATE.items = [...STARTER_ITEMS];
         saveState();
       }
       renderWardrobe();
       renderCanvasPicker();
+      renderCanvasFromState();
+      attachCanvasBackgroundHandler();
       renderSavedOutfits();
       renderAnalytics();
       renderCalendar();
       lucide.createIcons();
+      updateWeather({ silent: true });
+      WEATHER_REFRESH_TIMER = setInterval(() => updateWeather({ silent: true }), WEATHER_REFRESH_MS);
     });
 
     // Storage functions
@@ -885,7 +1080,8 @@
         items: APP_STATE.items,
         outfits: APP_STATE.outfits,
         calendar: APP_STATE.calendar,
-        profile: APP_STATE.profile
+        profile: APP_STATE.profile,
+        canvasItems: APP_STATE.canvasItems
       }));
     }
 
@@ -894,9 +1090,10 @@
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          APP_STATE.items = parsed.items || [];
+          APP_STATE.items = (parsed.items || []).map(item => ({ ...item, favorite: item.favorite === true }));
           APP_STATE.outfits = parsed.outfits || [];
           APP_STATE.calendar = parsed.calendar || {};
+          APP_STATE.canvasItems = Array.isArray(parsed.canvasItems) ? parsed.canvasItems : [];
           if (parsed.profile) APP_STATE.profile = { ...APP_STATE.profile, ...parsed.profile };
         } catch(e) {
           console.error(e);
@@ -922,11 +1119,12 @@
 
       if (tabId === 'analytics') renderAnalytics();
       if (tabId === 'calendar') renderCalendar();
-      if (tabId === 'canvas') renderCanvasPicker();
+      if (tabId === 'canvas') { renderCanvasPicker(); renderCanvasFromState(); attachCanvasBackgroundHandler(); }
     }
 
     // Modal Helpers
     function openModal(id) {
+      if (id === 'modal-ai-generator') syncWeatherInput();
       document.getElementById(id).classList.remove('hidden');
     }
     function closeModal(id) {
@@ -963,35 +1161,99 @@
       filterWardrobe();
     }
 
+    function getPopularityMap() {
+      const popularity = {};
+      (APP_STATE.outfits || []).forEach(outfit => {
+        if (Array.isArray(outfit.canvasItems) && outfit.canvasItems.length) {
+          outfit.canvasItems.forEach(canvasItem => {
+            const key = canvasItem.itemId || canvasItem.title;
+            if (key) popularity[key] = (popularity[key] || 0) + 1;
+          });
+        } else {
+          (outfit.items || []).forEach(title => {
+            if (title) popularity[title] = (popularity[title] || 0) + 1;
+          });
+        }
+      });
+      return popularity;
+    }
+
     function filterWardrobe() {
       const search = document.getElementById('wardrobe-search').value.toLowerCase();
       const season = document.getElementById('wardrobe-season-filter').value;
       const sort = document.getElementById('wardrobe-sort').value;
+      const popularity = getPopularityMap();
 
       let filtered = APP_STATE.items.filter(item => {
-        const matchSearch = item.title.toLowerCase().includes(search) || 
-                            item.color.toLowerCase().includes(search) || 
+        const matchSearch = item.title.toLowerCase().includes(search) ||
+                            item.color.toLowerCase().includes(search) ||
                             (item.brand && item.brand.toLowerCase().includes(search));
         const matchCat = APP_STATE.currentCategory === 'all' || item.cat === APP_STATE.currentCategory;
         const matchSeason = season === 'all' || item.season === season || item.season === 'Всесезон';
-        return matchSearch && matchCat && matchSeason;
+        const matchFavorite = !APP_STATE.favoritesOnly || item.favorite === true;
+        return matchSearch && matchCat && matchSeason && matchFavorite;
       });
 
-      if (sort === 'wears') filtered.sort((a,b) => (b.wears || 0) - (a.wears || 0));
-      if (sort === 'price') filtered.sort((a,b) => (b.price || 0) - (a.price || 0));
-      if (sort === 'newest') filtered.reverse();
+      const seasonOrder = ['Лето', 'Осень', 'Зима', 'Весна', 'Демисезон', 'Всесезон'];
+      const categoryOrder = ['Верх', 'Низ', 'Платья', 'Верхняя одежда', 'Обувь', 'Аксессуары'];
+
+      if (sort === 'newest') {
+        filtered.reverse();
+      } else if (sort === 'popular') {
+        filtered.sort((a, b) => {
+          const ap = popularity[a.id] || popularity[a.title] || 0;
+          const bp = popularity[b.id] || popularity[b.title] || 0;
+          return (bp - ap) || a.title.localeCompare(b.title, 'ru');
+        });
+      } else if (sort === 'season') {
+        filtered.sort((a, b) => {
+          const ai = seasonOrder.indexOf(a.season);
+          const bi = seasonOrder.indexOf(b.season);
+          return (ai - bi) || a.title.localeCompare(b.title, 'ru');
+        });
+      } else if (sort === 'category') {
+        filtered.sort((a, b) => {
+          const ai = categoryOrder.indexOf(a.cat);
+          const bi = categoryOrder.indexOf(b.cat);
+          return (ai - bi) || a.title.localeCompare(b.title, 'ru');
+        });
+      }
 
       renderWardrobeGrid(filtered);
     }
 
+    function toggleFavoritesFilter() {
+      APP_STATE.favoritesOnly = !APP_STATE.favoritesOnly;
+      const btn = document.getElementById('favorites-filter');
+      if (btn) {
+        btn.classList.toggle('bg-charcoal', APP_STATE.favoritesOnly);
+        btn.classList.toggle('text-white', APP_STATE.favoritesOnly);
+        btn.classList.toggle('bg-linen', !APP_STATE.favoritesOnly);
+        btn.classList.toggle('text-taupe', !APP_STATE.favoritesOnly);
+      }
+      filterWardrobe();
+      lucide.createIcons();
+    }
+
+    function toggleFavorite(id) {
+      const item = APP_STATE.items.find(i => i.id === id);
+      if (!item) return;
+      item.favorite = !item.favorite;
+      saveState();
+      filterWardrobe();
+      showToast(item.favorite ? 'Добавлено в избранное' : 'Удалено из избранного');
+    }
+
     function renderWardrobe() {
       const countEl = document.getElementById('stat-total-count');
-      const valEl = document.getElementById('stat-total-value');
-      
-      const totalVal = APP_STATE.items.reduce((acc, i) => acc + (Number(i.price) || 0), 0);
       if (countEl) countEl.innerText = APP_STATE.items.length;
-      if (valEl) valEl.innerText = totalVal.toLocaleString('ru-RU') + ' ₽';
-
+      const favBtn = document.getElementById('favorites-filter');
+      if (favBtn) {
+        favBtn.classList.toggle('bg-charcoal', APP_STATE.favoritesOnly);
+        favBtn.classList.toggle('text-white', APP_STATE.favoritesOnly);
+        favBtn.classList.toggle('bg-linen', !APP_STATE.favoritesOnly);
+        favBtn.classList.toggle('text-taupe', !APP_STATE.favoritesOnly);
+      }
       filterWardrobe();
     }
 
@@ -1015,6 +1277,9 @@
         <div class="bg-warmCard rounded-3xl p-3 border border-warmBorder card-hover group relative flex flex-col justify-between">
           <div class="relative w-full aspect-square rounded-2xl bg-linen overflow-hidden mb-2.5 flex items-center justify-center p-2">
             <img src="${item.img}" alt="${item.title}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">
+            <button onclick="toggleFavorite('${item.id}')" class="absolute top-2 left-2 p-1.5 bg-white/90 hover:bg-rose-50 rounded-full transition-all shadow-sm ${item.favorite ? 'text-rose-600' : 'text-taupe hover:text-rose-600'}" aria-label="${item.favorite ? 'Убрать из избранного' : 'Добавить в избранное'}">
+              <i data-lucide="heart" class="w-3.5 h-3.5 ${item.favorite ? 'fill-current' : ''}"></i>
+            </button>
             <button onclick="deleteItem('${item.id}')" class="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-red-50 text-taupe hover:text-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-sm">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
@@ -1025,10 +1290,6 @@
               <span class="font-medium text-charcoal">${item.brand || ''}</span>
             </div>
             <h4 class="font-semibold text-xs text-charcoal line-clamp-1">${item.title}</h4>
-            <div class="flex items-center justify-between text-xs pt-1">
-              <span class="text-terracotta font-semibold">${item.price ? item.price.toLocaleString('ru-RU') + ' ₽' : '—'}</span>
-              <span class="text-[10px] text-taupe bg-sand px-2 py-0.5 rounded-full">${item.wears || 0} носок</span>
-            </div>
           </div>
         </div>
       `).join('');
@@ -1037,7 +1298,7 @@
     }
 
     function loadStarterKit() {
-      APP_STATE.items = [...STARTER_ITEMS];
+      APP_STATE.items = STARTER_ITEMS.map(item => ({ ...item, favorite: false }));
       saveState();
       renderWardrobe();
       showToast('Загружен базовый капсульный сет!');
@@ -1062,17 +1323,14 @@
       const cat = document.getElementById('new-item-cat').value;
       const season = document.getElementById('new-item-season').value;
       const brand = document.getElementById('new-item-brand').value.trim();
-      const price = Number(document.getElementById('new-item-price').value) || 0;
-
       const newItem = {
         id: 'item-' + Date.now(),
         title,
         cat,
         season,
         brand,
-        price,
         color: 'Разноцветный',
-        wears: 0,
+        favorite: false,
         img: tempUploadedImg || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&auto=format&fit=crop&q=80'
       };
 
@@ -1085,7 +1343,6 @@
       // Reset form
       document.getElementById('new-item-title').value = '';
       document.getElementById('new-item-brand').value = '';
-      document.getElementById('new-item-price').value = '';
       document.getElementById('upload-preview-container').classList.add('hidden');
       tempUploadedImg = null;
     }
@@ -1100,59 +1357,120 @@
     }
 
     // Canvas Interactive Studio
+    let canvasPointerSession = null;
+
     function renderCanvasPicker() {
       const picker = document.getElementById('canvas-item-picker');
       if (!picker) return;
 
       picker.innerHTML = APP_STATE.items.map(item => `
-        <div onclick="addCanvasItem('${item.id}')" class="bg-linen p-2 rounded-2xl border border-warmBorder hover:border-terracotta cursor-pointer transition-all text-center flex flex-col items-center">
-          <img src="${item.img}" class="w-16 h-16 object-contain mb-1">
-          <p class="text-[10px] font-semibold text-charcoal line-clamp-1">${item.title}</p>
-        </div>
+        <button type="button" onclick="addCanvasItem('${item.id}')" class="bg-linen p-2 rounded-2xl border border-warmBorder hover:border-terracotta cursor-pointer transition-all text-center flex flex-col items-center">
+          <img src="${item.img}" alt="${item.title}" class="w-16 h-16 object-contain mb-1 pointer-events-none">
+          <span class="text-[10px] font-semibold text-charcoal line-clamp-1">${item.title}</span>
+        </button>
       `).join('');
+    }
+
+    function renderCanvasFromState() {
+      const canvasArea = document.getElementById('canvas-area');
+      if (!canvasArea) return;
+
+      canvasArea.querySelectorAll('.canvas-element').forEach(el => el.remove());
+      APP_STATE.canvasItems = (APP_STATE.canvasItems || [])
+        .map(normalizeCanvasItem)
+        .map(clampCanvasItemToBounds)
+        .sort((a, b) => a.zIndex - b.zIndex);
+
+      const placeholder = document.getElementById('canvas-placeholder');
+      const hasItems = APP_STATE.canvasItems.length > 0;
+      if (placeholder) placeholder.style.display = hasItems ? 'none' : 'block';
+
+      APP_STATE.canvasItems.forEach(renderCanvasElement);
+      if (APP_STATE.canvasItems.length === 0) {
+        document.getElementById('canvas-controls')?.classList.add('hidden');
+        APP_STATE.selectedCanvasItemId = null;
+      }
+    }
+
+    function normalizeCanvasItem(el) {
+      return {
+        id: el.id || ('c-el-' + Date.now() + '-' + Math.random().toString(16).slice(2)),
+        itemId: el.itemId || '',
+        img: el.img || '',
+        title: el.title || 'Вещь',
+        x: Number.isFinite(Number(el.x)) ? Number(el.x) : 40,
+        y: Number.isFinite(Number(el.y)) ? Number(el.y) : 40,
+        scale: Math.min(2.5, Math.max(0.5, Number(el.scale) || 1)),
+        rotation: Number(el.rotation) || 0,
+        zIndex: Number(el.zIndex) || 1
+      };
+    }
+
+    function clampCanvasItemToBounds(el) {
+      const canvasArea = document.getElementById('canvas-area');
+      if (!canvasArea) return el;
+
+      const itemW = 128 * el.scale;
+      const itemH = 128 * el.scale;
+      const maxX = Math.max(0, canvasArea.clientWidth - Math.min(itemW, canvasArea.clientWidth));
+      const maxY = Math.max(0, canvasArea.clientHeight - Math.min(itemH, canvasArea.clientHeight));
+      el.x = Math.max(0, Math.min(Number(el.x) || 0, maxX));
+      el.y = Math.max(0, Math.min(Number(el.y) || 0, maxY));
+      return el;
     }
 
     function addCanvasItem(itemId) {
       const item = APP_STATE.items.find(i => i.id === itemId);
       if (!item) return;
 
+      const canvasArea = document.getElementById('canvas-area');
       const placeholder = document.getElementById('canvas-placeholder');
       if (placeholder) placeholder.style.display = 'none';
 
-      const canvasArea = document.getElementById('canvas-area');
-      const canvasElId = 'c-el-' + Date.now();
+      const offset = APP_STATE.canvasItems.length * 18;
+      const canvasElId = 'c-el-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+      const maxZ = Math.max(...APP_STATE.canvasItems.map(i => Number(i.zIndex) || 0), 0);
 
-      const elData = {
+      const elData = normalizeCanvasItem({
         id: canvasElId,
         itemId: item.id,
         img: item.img,
         title: item.title,
-        x: 50 + (APP_STATE.canvasItems.length * 20),
-        y: 50 + (APP_STATE.canvasItems.length * 20),
+        x: Math.min(40 + offset, Math.max(0, (canvasArea?.clientWidth || 680) - 150)),
+        y: Math.min(40 + offset, Math.max(0, (canvasArea?.clientHeight || 500) - 150)),
         scale: 1,
         rotation: 0,
-        zIndex: APP_STATE.canvasItems.length + 1
-      };
+        zIndex: maxZ + 1
+      });
 
       APP_STATE.canvasItems.push(elData);
       renderCanvasElement(elData);
       selectCanvasElement(canvasElId);
+      saveState();
     }
 
     function renderCanvasElement(el) {
       const canvasArea = document.getElementById('canvas-area');
+      if (!canvasArea) return;
+
       const div = document.createElement('div');
       div.id = el.id;
       div.className = 'canvas-element absolute cursor-move p-2 transition-transform';
       div.style.left = `${el.x}px`;
       div.style.top = `${el.y}px`;
       div.style.zIndex = el.zIndex;
+      div.style.touchAction = 'none';
+      div.style.userSelect = 'none';
+      div.style.transformOrigin = 'top left';
       div.style.transform = `scale(${el.scale}) rotate(${el.rotation}deg)`;
 
-      div.innerHTML = `<img src="${el.img}" class="w-28 h-28 object-contain pointer-events-none">`;
+      div.innerHTML = `<img src="${el.img}" alt="${el.title}" draggable="false" class="w-28 h-28 object-contain pointer-events-none select-none">`;
 
-      div.addEventListener('mousedown', (e) => startDragCanvasItem(e, el.id));
-      div.addEventListener('touchstart', (e) => startDragCanvasItem(e, el.id), { passive: false });
+      div.addEventListener('pointerdown', (e) => startDragCanvasItem(e, el.id));
+      div.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectCanvasElement(el.id);
+      });
 
       canvasArea.appendChild(div);
     }
@@ -1162,89 +1480,138 @@
       document.querySelectorAll('.canvas-element').forEach(el => el.classList.remove('selected'));
       const active = document.getElementById(id);
       if (active) active.classList.add('selected');
-      document.getElementById('canvas-controls').classList.remove('hidden');
+      document.getElementById('canvas-controls')?.classList.remove('hidden');
+    }
+
+    function attachCanvasBackgroundHandler() {
+      const canvasArea = document.getElementById('canvas-area');
+      if (!canvasArea || canvasArea.dataset.bound === '1') return;
+      canvasArea.dataset.bound = '1';
+      canvasArea.addEventListener('pointerdown', (e) => {
+        if (e.target === canvasArea || e.target?.id === 'canvas-placeholder' || e.target?.closest?.('#canvas-placeholder')) {
+          deselectCanvasElement();
+        }
+      });
+    }
+
+    function deselectCanvasElement() {
+      APP_STATE.selectedCanvasItemId = null;
+      document.querySelectorAll('.canvas-element').forEach(el => el.classList.remove('selected'));
+      document.getElementById('canvas-controls')?.classList.add('hidden');
     }
 
     function startDragCanvasItem(e, id) {
+      e.preventDefault();
       e.stopPropagation();
       selectCanvasElement(id);
 
       const el = APP_STATE.canvasItems.find(i => i.id === id);
       const dom = document.getElementById(id);
-      if (!el || !dom) return;
+      const canvasArea = document.getElementById('canvas-area');
+      if (!el || !dom || !canvasArea) return;
 
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      bringActiveCanvasItemToFront();
 
-      const startX = clientX - el.x;
-      const startY = clientY - el.y;
+      const rect = canvasArea.getBoundingClientRect();
+      canvasPointerSession = {
+        id,
+        pointerId: e.pointerId,
+        offsetX: e.clientX - rect.left - el.x,
+        offsetY: e.clientY - rect.top - el.y
+      };
 
-      function onMove(me) {
-        const curX = me.touches ? me.touches[0].clientX : me.clientX;
-        const curY = me.touches ? me.touches[0].clientY : me.clientY;
-        el.x = curX - startX;
-        el.y = curY - startY;
+      dom.setPointerCapture?.(e.pointerId);
+
+      const onMove = (me) => {
+        if (!canvasPointerSession || canvasPointerSession.id !== id || canvasPointerSession.pointerId !== me.pointerId) return;
+
+        const r = canvasArea.getBoundingClientRect();
+        const itemW = 128 * el.scale;
+        const itemH = 128 * el.scale;
+        const maxX = Math.max(0, canvasArea.clientWidth - Math.min(itemW, canvasArea.clientWidth));
+        const maxY = Math.max(0, canvasArea.clientHeight - Math.min(itemH, canvasArea.clientHeight));
+
+        el.x = Math.max(0, Math.min(me.clientX - r.left - canvasPointerSession.offsetX, maxX));
+        el.y = Math.max(0, Math.min(me.clientY - r.top - canvasPointerSession.offsetY, maxY));
+
         dom.style.left = `${el.x}px`;
         dom.style.top = `${el.y}px`;
-      }
+        scheduleCanvasPersist();
+      };
 
-      function onEnd() {
-        window.removeEventListener('mousemove', onMove);
-        window.removeEventListener('mouseup', onEnd);
-        window.removeEventListener('touchmove', onMove);
-        window.removeEventListener('touchend', onEnd);
-      }
+      const onEnd = (me) => {
+        if (me.pointerId !== e.pointerId) return;
+        dom.releasePointerCapture?.(e.pointerId);
+        dom.removeEventListener('pointermove', onMove);
+        dom.removeEventListener('pointerup', onEnd);
+        dom.removeEventListener('pointercancel', onEnd);
+        canvasPointerSession = null;
+        saveState();
+      };
 
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup', onEnd);
-      window.addEventListener('touchmove', onMove, { passive: false });
-      window.addEventListener('touchend', onEnd);
+      dom.addEventListener('pointermove', onMove);
+      dom.addEventListener('pointerup', onEnd);
+      dom.addEventListener('pointercancel', onEnd);
     }
 
     function scaleActiveCanvasItem(factor) {
       const id = APP_STATE.selectedCanvasItemId;
       const el = APP_STATE.canvasItems.find(i => i.id === id);
       if (!el) return;
-      el.scale *= factor;
+      el.scale = Math.min(2.5, Math.max(0.5, el.scale * factor));
+      clampCanvasItemToBounds(el);
       const dom = document.getElementById(id);
       if (dom) dom.style.transform = `scale(${el.scale}) rotate(${el.rotation}deg)`;
+      saveState();
     }
 
     function rotateActiveCanvasItem(deg) {
       const id = APP_STATE.selectedCanvasItemId;
       const el = APP_STATE.canvasItems.find(i => i.id === id);
       if (!el) return;
-      el.rotation = (el.rotation + deg) % 360;
+      el.rotation = ((el.rotation + deg) % 360 + 360) % 360;
+      clampCanvasItemToBounds(el);
       const dom = document.getElementById(id);
       if (dom) dom.style.transform = `scale(${el.scale}) rotate(${el.rotation}deg)`;
+      saveState();
     }
 
     function bringActiveCanvasItemToFront() {
       const id = APP_STATE.selectedCanvasItemId;
       const el = APP_STATE.canvasItems.find(i => i.id === id);
       if (!el) return;
-      const maxZ = Math.max(...APP_STATE.canvasItems.map(i => i.zIndex), 0);
+      const maxZ = Math.max(...APP_STATE.canvasItems.map(i => Number(i.zIndex) || 0), 0);
       el.zIndex = maxZ + 1;
       const dom = document.getElementById(id);
       if (dom) dom.style.zIndex = el.zIndex;
+      scheduleCanvasPersist();
     }
 
     function removeActiveCanvasItem() {
       const id = APP_STATE.selectedCanvasItemId;
+      if (!id) return;
       APP_STATE.canvasItems = APP_STATE.canvasItems.filter(i => i.id !== id);
-      const dom = document.getElementById(id);
-      if (dom) dom.remove();
-      document.getElementById('canvas-controls').classList.add('hidden');
+      document.getElementById(id)?.remove();
+      APP_STATE.selectedCanvasItemId = null;
+      document.getElementById('canvas-controls')?.classList.add('hidden');
       if (APP_STATE.canvasItems.length === 0) {
         document.getElementById('canvas-placeholder').style.display = 'block';
       }
+      saveState();
     }
 
     function clearCanvas() {
       APP_STATE.canvasItems = [];
       document.querySelectorAll('.canvas-element').forEach(el => el.remove());
       document.getElementById('canvas-placeholder').style.display = 'block';
-      document.getElementById('canvas-controls').classList.add('hidden');
+      document.getElementById('canvas-controls')?.classList.add('hidden');
+      APP_STATE.selectedCanvasItemId = null;
+      saveState();
+    }
+
+    function scheduleCanvasPersist() {
+      clearTimeout(APP_STATE.canvasPersistTimer);
+      APP_STATE.canvasPersistTimer = setTimeout(() => saveState(), 150);
     }
 
     function saveCanvasOutfit() {
@@ -1258,6 +1625,7 @@
         title: 'Образ №' + (APP_STATE.outfits.length + 1),
         items: APP_STATE.canvasItems.map(i => i.title),
         previewImgs: APP_STATE.canvasItems.map(i => i.img),
+        canvasItems: APP_STATE.canvasItems.map(i => ({ ...normalizeCanvasItem(i) })),
         date: new Date().toLocaleDateString('ru-RU')
       };
 
@@ -1265,6 +1633,35 @@
       saveState();
       renderSavedOutfits();
       showToast('Лук сохранён в вашу коллекцию!');
+    }
+
+    function loadSavedOutfit(outfitId) {
+      const outfit = APP_STATE.outfits.find(o => o.id === outfitId);
+      if (!outfit) return;
+
+      if (Array.isArray(outfit.canvasItems) && outfit.canvasItems.length) {
+        APP_STATE.canvasItems = outfit.canvasItems.map(normalizeCanvasItem);
+      } else {
+        APP_STATE.canvasItems = (outfit.items || []).map((title, index) => {
+          const item = APP_STATE.items.find(i => i.title === title);
+          return normalizeCanvasItem({
+            id: 'c-el-' + Date.now() + '-' + index,
+            itemId: item?.id || '',
+            img: item?.img || (outfit.previewImgs || [])[index] || '',
+            title,
+            x: 40 + index * 24,
+            y: 40 + index * 24,
+            scale: 1,
+            rotation: 0,
+            zIndex: index + 1
+          });
+        });
+      }
+
+      saveState();
+      renderCanvasFromState();
+      switchTab('canvas');
+      showToast('Лук загружен на холст');
     }
 
     function renderSavedOutfits() {
@@ -1283,14 +1680,216 @@
             <span class="text-[10px] text-taupe">${o.date}</span>
           </div>
           <div class="grid grid-cols-3 gap-1.5 bg-linen p-2 rounded-2xl">
-            ${o.previewImgs.slice(0, 3).map(img => `<img src="${img}" class="w-full h-14 object-contain">`).join('')}
+            ${(o.previewImgs || []).slice(0, 3).map(img => `<img src="${img}" class="w-full h-14 object-contain">`).join('')}
           </div>
-          <p class="text-[11px] text-taupe line-clamp-1">${o.items.join(', ')}</p>
+          <p class="text-[11px] text-taupe line-clamp-1">${(o.items || []).join(', ')}</p>
+          <button type="button" onclick="loadSavedOutfit('${o.id}')" class="w-full py-2 bg-sand hover:bg-warmBorder rounded-xl text-[10px] font-semibold text-charcoal">
+            Открыть на холсте
+          </button>
         </div>
       `).join('');
     }
 
     // AI Actions & Modals
+
+    // =========================================================
+    // Dynamic Weather + Wardrobe Recommendation Engine
+    // =========================================================
+    const WEATHER_REFRESH_MS = 10 * 60 * 1000;
+    let WEATHER_REFRESH_TIMER = null;
+    const YUNTOLOVO_WEATHER = {
+      location: 'Юнтолово, Санкт-Петербург',
+      latitude: 60.0305,
+      longitude: 30.1334,
+      timezone: 'Europe/Moscow'
+    };
+
+    const WMO_WEATHER = {
+      0: ['Ясно', 'sun'], 1: ['Преимущественно ясно', 'sun'],
+      2: ['Переменная облачность', 'cloud-sun'], 3: ['Пасмурно', 'cloud'],
+      45: ['Туман', 'cloud-fog'], 48: ['Изморозь и туман', 'cloud-fog'],
+      51: ['Слабая морось', 'cloud-drizzle'], 53: ['Морось', 'cloud-drizzle'], 55: ['Сильная морось', 'cloud-drizzle'],
+      56: ['Ледяная морось', 'cloud-drizzle'], 57: ['Сильная ледяная морось', 'cloud-drizzle'],
+      61: ['Слабый дождь', 'cloud-rain'], 63: ['Дождь', 'cloud-rain'], 65: ['Сильный дождь', 'cloud-rain'],
+      66: ['Ледяной дождь', 'cloud-rain'], 67: ['Сильный ледяной дождь', 'cloud-rain'],
+      71: ['Слабый снег', 'cloud-snow'], 73: ['Снег', 'cloud-snow'], 75: ['Сильный снег', 'cloud-snow'], 77: ['Снежная крупа', 'cloud-snow'],
+      80: ['Кратковременный дождь', 'cloud-rain'], 81: ['Ливни', 'cloud-rain'], 82: ['Сильные ливни', 'cloud-rain'],
+      85: ['Снеговые заряды', 'cloud-snow'], 86: ['Сильные снеговые заряды', 'cloud-snow'],
+      95: ['Гроза', 'cloud-lightning'], 96: ['Гроза с градом', 'cloud-lightning'], 99: ['Сильная гроза с градом', 'cloud-lightning']
+    };
+
+    function getWeatherMeta(code) {
+      return WMO_WEATHER[Number(code)] || ['Переменная погода', 'cloud-sun'];
+    }
+
+    function formatWeatherUpdated(iso) {
+      if (!iso) return 'Обновление…';
+      const dt = new Date(iso);
+      return `Обновлено ${dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    function getWeatherContext(weather = APP_STATE.weather) {
+      const t = Number(weather.temperature);
+      const wetCodes = [51,53,55,56,57,61,63,65,66,67,71,73,75,77,80,81,82,85,86,95,96,99];
+      const wet = Number(weather.precipitation || 0) > 0.05 || Number(weather.rain || 0) > 0.05 || Number(weather.showers || 0) > 0.05 || Number(weather.snowfall || 0) > 0 || wetCodes.includes(Number(weather.weatherCode)) || Number(weather.dailyRainChance || 0) >= 50;
+      const cold = t <= 5;
+      const cool = t > 5 && t < 15;
+      const mild = t >= 15 && t < 22;
+      const warm = t >= 22;
+      const windy = Number(weather.windSpeed || 0) >= 25 || Number(weather.windGusts || 0) >= 40;
+      return { t, wet, cold, cool, mild, warm, windy };
+    }
+
+    function scoreItemForWeather(item, context) {
+      const title = String(item.title || '').toLowerCase();
+      const cat = String(item.cat || '');
+      const season = String(item.season || 'Всесезон');
+      let score = 0;
+      if (season === 'Зима') score += context.cold ? 5 : context.warm ? -5 : 1;
+      if (season === 'Демисезон') score += context.cool ? 5 : context.mild ? 3 : context.cold ? 2 : context.warm ? -2 : 1;
+      if (season === 'Лето') score += context.warm ? 5 : context.cool || context.cold ? -4 : 1;
+      if (season === 'Всесезон') score += 2;
+      if (cat === 'Верхняя одежда') score += context.cold ? 7 : context.cool ? 4 : context.wet ? 3 : context.windy ? 4 : context.warm ? -5 : 0;
+      if (cat === 'Верх') score += context.cold ? 1 : 4;
+      if (cat === 'Низ') score += 4;
+      if (cat === 'Платья') score += context.warm || context.mild ? 5 : context.cool ? 2 : context.cold ? -1 : 0;
+      if (cat === 'Обувь') score += context.wet ? 2 : 3;
+      if (cat === 'Аксессуары') score += context.cold || context.windy ? 5 : context.wet ? 2 : 1;
+      if (/(шерст|пух|утепл|тепл|пальто|парка|куртк|свитер|кардиган|флис)/.test(title)) score += context.cold || context.cool ? 4 : -1;
+      if (/(дожд|водооттал|мембран|непромокаем)/.test(title)) score += context.wet ? 5 : 0;
+      if (/(лен|майка|топ|футболк|шорт|сараф|сандал)/.test(title)) score += context.warm ? 4 : context.cold ? -3 : 0;
+      if (/(шарф|шапк|перчат|бафф)/.test(title)) score += context.cold || context.windy ? 5 : -2;
+      return score;
+    }
+
+    function rankWeatherItems(items, context) {
+      return [...items].sort((a, b) => scoreItemForWeather(b, context) - scoreItemForWeather(a, context));
+    }
+
+    function getWeatherReason(item, context) {
+      const t = Number(context.t);
+      if (item.cat === 'Верхняя одежда' && (context.cold || context.cool || context.windy || context.wet)) return `Нужен верхний слой при ${Math.round(t)}°C` + (context.wet ? ' и осадках' : '') + (context.windy ? ' и ветре' : '');
+      if ((item.season || '') === 'Зима' && context.cold) return 'Тёплый сезонный слой';
+      if ((item.season || '') === 'Демисезон' && (context.cool || context.mild)) return 'Подходит для демисезонной температуры';
+      if ((item.season || '') === 'Лето' && context.warm) return 'Комфортно для тёплой погоды';
+      if (item.cat === 'Аксессуары' && context.cold) return 'Добавляет тепло';
+      if (item.cat === 'Обувь' && context.wet) return 'Выбрана с учётом осадков';
+      return 'Хорошая база для текущей погоды';
+    }
+
+    function buildWeatherOutfit() {
+      const items = APP_STATE.items || [];
+      if (!items.length) return { items: [], context: getWeatherContext(), note: 'В гардеробе пока нет вещей для рекомендации.' };
+      const context = getWeatherContext();
+      const ranked = rankWeatherItems(items, context);
+      const used = new Set();
+      const picked = [];
+      const takeBest = (predicate) => {
+        const item = ranked.find(i => predicate(i) && !used.has(i.id));
+        if (item) { used.add(item.id); picked.push(item); }
+        return item;
+      };
+      if (context.cold || context.cool || context.wet || context.windy) takeBest(i => i.cat === 'Верхняя одежда');
+      const hasDress = takeBest(i => (context.mild || context.warm) && !context.wet && i.cat === 'Платья');
+      if (!hasDress) { takeBest(i => i.cat === 'Верх'); takeBest(i => i.cat === 'Низ'); }
+      takeBest(i => i.cat === 'Обувь');
+      if (context.cold || context.windy || context.wet) takeBest(i => i.cat === 'Аксессуары');
+      for (const item of ranked) {
+        if (picked.length >= 5) break;
+        if (!used.has(item.id)) { used.add(item.id); picked.push(item); }
+      }
+      let note = context.wet ? 'Есть риск осадков: пригодится непромокаемый верхний слой.' : context.cold ? 'Холодно: добавьте тёплый слой.' : context.windy ? 'Ветрено: предпочтительны более плотные слои.' : context.warm ? 'Теплее: выбирайте лёгкие слои и дышащие ткани.' : 'Комфортная демисезонная погода.';
+      return { items: picked.slice(0, 5), context, note };
+    }
+
+    function renderWeatherRecommendation(outfit = buildWeatherOutfit()) {
+      const output = document.getElementById('ai-results-output');
+      const title = document.getElementById('ai-output-title');
+      const content = document.getElementById('ai-output-content');
+      const w = APP_STATE.weather || {};
+      const weatherText = `${Number(w.temperature || 0) >= 0 ? '+' : ''}${Math.round(Number(w.temperature || 0))}°C, ${w.description || 'погода уточняется'}`;
+      const details = [w.apparentTemperature != null ? `ощущается как ${Math.round(w.apparentTemperature)}°C` : '', w.dailyRainChance ? `вероятность осадков сегодня ${Math.round(w.dailyRainChance)}%` : '', w.windSpeed != null ? `ветер ${Math.round(w.windSpeed)} км/ч` : ''].filter(Boolean).join(' • ');
+      title.innerText = 'Что надеть по погоде';
+      content.innerHTML = `
+        <div class="bg-sand p-4 rounded-2xl border border-warmBorder space-y-2">
+          <p class="font-semibold text-xs text-charcoal">Юнтолово, Санкт-Петербург • ${weatherText}</p>
+          <p class="text-[10px] text-taupe">${details}</p>
+          <p class="text-xs text-charcoal">${outfit.note}</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+          ${outfit.items.map(item => `
+            <div class="bg-warmCard p-3 rounded-2xl border border-warmBorder">
+              <img src="${item.img}" class="w-full h-28 object-contain bg-linen rounded-xl mb-2">
+              <p class="font-bold text-xs text-charcoal line-clamp-2">${item.title}</p>
+              <p class="text-[10px] text-taupe mt-1">${item.cat} • ${getWeatherReason(item, outfit.context)}</p>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      output.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function recommendOutfitByWeather() {
+      if (!APP_STATE.weather || APP_STATE.weather.temperature == null) {
+        switchTab('stylist');
+        showToast('Сначала загружаю актуальную погоду…');
+        updateWeather({ silent: false, afterLoad: true });
+        return;
+      }
+      switchTab('stylist');
+      renderWeatherRecommendation(buildWeatherOutfit());
+    }
+
+    function syncWeatherInput() {
+      const input = document.getElementById('gen-weather');
+      if (!input) return;
+      const w = APP_STATE.weather || {};
+      input.value = w.temperature == null ? 'Загрузка погоды…' : `${w.location} · ${w.temperature >= 0 ? '+' : ''}${Math.round(w.temperature)}°C, ${w.description}`;
+    }
+
+    function renderWeatherUI() {
+      const w = APP_STATE.weather || {};
+      const desc = document.getElementById('weather-desc');
+      const loc = document.getElementById('weather-location');
+      const updated = document.getElementById('weather-updated');
+      if (loc) loc.innerText = w.location || YUNTOLOVO_WEATHER.location;
+      if (desc) desc.innerText = w.temperature == null ? (w.description || 'Загрузка погоды…') : `${w.temperature >= 0 ? '+' : ''}${Math.round(w.temperature)}°C, ${w.description}`;
+      if (updated) updated.innerText = formatWeatherUpdated(w.updatedAt);
+      const icon = document.getElementById('weather-icon');
+      if (icon) { icon.setAttribute('data-lucide', getWeatherMeta(w.weatherCode)[1]); lucide.createIcons(); }
+      syncWeatherInput();
+    }
+
+    async function updateWeather(options = {}) {
+      const silent = Boolean(options.silent);
+      const afterLoad = Boolean(options.afterLoad);
+      const timezone = encodeURIComponent(YUNTOLOVO_WEATHER.timezone);
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${YUNTOLOVO_WEATHER.latitude}&longitude=${YUNTOLOVO_WEATHER.longitude}&current=temperature_2m,apparent_temperature,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m,wind_gusts_10m&daily=precipitation_probability_max&timezone=${timezone}&forecast_days=1`;
+      try {
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const c = data.current || {};
+        const meta = getWeatherMeta(c.weather_code);
+        APP_STATE.weather = {
+          ...APP_STATE.weather, ...YUNTOLOVO_WEATHER,
+          temperature: c.temperature_2m, apparentTemperature: c.apparent_temperature,
+          precipitation: c.precipitation || 0, rain: c.rain || 0, showers: c.showers || 0, snowfall: c.snowfall || 0,
+          windSpeed: c.wind_speed_10m || 0, windGusts: c.wind_gusts_10m || 0,
+          weatherCode: c.weather_code, description: meta[0], dailyRainChance: data.daily?.precipitation_probability_max?.[0] || 0,
+          updatedAt: new Date().toISOString()
+        };
+        renderWeatherUI();
+        if (!silent) showToast('Погода обновлена для Юнтолово');
+        if (afterLoad) renderWeatherRecommendation(buildWeatherOutfit());
+      } catch (error) {
+        console.error('Weather update failed:', error);
+        APP_STATE.weather = { ...APP_STATE.weather, ...YUNTOLOVO_WEATHER, description: 'Не удалось обновить погоду', updatedAt: new Date().toISOString() };
+        renderWeatherUI();
+        if (!silent) showToast('Не удалось получить погоду. Проверьте подключение к интернету.');
+      }
+    }
     function runOutfitShazam() {
       closeModal('modal-shazam');
       const output = document.getElementById('ai-results-output');
@@ -1317,10 +1916,12 @@
       output.classList.remove('hidden');
     }
 
-    function runAiGenerator() {
-      closeModal('modal-ai-generator');
+    async function runAiGenerator() {
+      syncWeatherInput();
       const occasion = document.getElementById('gen-occasion').value;
+      if (!APP_STATE.weather || APP_STATE.weather.temperature == null) await updateWeather({ silent: true });
       const weather = document.getElementById('gen-weather').value;
+      const weatherOutfit = buildWeatherOutfit();
 
       const output = document.getElementById('ai-results-output');
       const title = document.getElementById('ai-output-title');
@@ -1329,10 +1930,11 @@
       title.innerText = `Сгенерированный образ: ${occasion}`;
       content.innerHTML = `
         <p class="text-xs text-taupe">Погода: ${weather} • Стилистика: ${APP_STATE.profile.stylePref}</p>
+        <p class="text-[10px] text-taupe">Профиль посадки: ${APP_STATE.profile.bodyShape || 'тип фигуры не указан'}${APP_STATE.profile.bust ? ` • грудь ${APP_STATE.profile.bust} см` : ''}${APP_STATE.profile.waist ? ` • талия ${APP_STATE.profile.waist} см` : ''}${APP_STATE.profile.hips ? ` • бёдра ${APP_STATE.profile.hips} см` : ''}</p>
         <div class="bg-sand p-4 rounded-2xl border border-warmBorder space-y-2">
-          <p class="font-semibold text-xs text-charcoal">Рекомендуемый сет из вашего шкафа:</p>
+          <p class="font-semibold text-xs text-charcoal">Рекомендуемый сет из вашего шкафа с учётом погоды:</p>
           <div class="grid grid-cols-3 gap-2">
-            ${APP_STATE.items.slice(0, 3).map(item => `
+            ${weatherOutfit.items.slice(0, 3).map(item => `
               <div class="bg-warmCard p-2 rounded-xl text-center">
                 <img src="${item.img}" class="w-14 h-14 object-contain mx-auto">
                 <p class="text-[10px] font-medium text-charcoal mt-1 line-clamp-1">${item.title}</p>
@@ -1342,6 +1944,8 @@
         </div>
       `;
       output.classList.remove('hidden');
+      closeModal('modal-ai-generator');
+      output.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function runVirtualTryOn() {
@@ -1353,7 +1957,7 @@
       title.innerText = 'Виртуальная Примерка';
       content.innerHTML = `
         <div class="text-center space-y-3 py-2">
-          <p class="text-xs text-taupe">Моделирование посадки под силуэт: <b>${APP_STATE.profile.bodyShape}</b> (${APP_STATE.profile.height} см)</p>
+          <p class="text-xs text-taupe">Моделирование посадки под силуэт: <b>${APP_STATE.profile.bodyShape}</b> (${APP_STATE.profile.height} см)${APP_STATE.profile.weight ? ` • ${APP_STATE.profile.weight} кг` : ''}</p>
           <div class="w-48 h-64 mx-auto bg-linen rounded-3xl border border-warmBorder flex flex-col items-center justify-center p-4">
             <i data-lucide="user-check" class="w-12 h-12 text-terracotta mb-2"></i>
             <p class="text-xs font-semibold text-charcoal">Симуляция завершена</p>
@@ -1411,26 +2015,12 @@
         </div>
       `;
       output.classList.remove('hidden');
+      closeModal('modal-ai-generator');
+      output.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // Analytics Rendering
     function renderAnalytics() {
-      const totalVal = APP_STATE.items.reduce((acc, i) => acc + (Number(i.price) || 0), 0);
-      const totalWears = APP_STATE.items.reduce((acc, i) => acc + (Number(i.wears) || 0), 0);
-      const avgCpw = totalWears > 0 ? Math.round(totalVal / totalWears) : 0;
-
-      const topItem = [...APP_STATE.items].sort((a,b) => (b.wears||0) - (a.wears||0))[0];
-      const unusedCount = APP_STATE.items.filter(i => !i.wears || i.wears === 0).length;
-
-      document.getElementById('kpi-total-val').innerText = totalVal.toLocaleString('ru-RU') + ' ₽';
-      document.getElementById('kpi-avg-cpw').innerText = avgCpw.toLocaleString('ru-RU') + ' ₽/выход';
-      
-      if (topItem) {
-        document.getElementById('kpi-top-item').innerText = topItem.title;
-        document.getElementById('kpi-top-wears').innerText = `${topItem.wears || 0} носок`;
-      }
-      document.getElementById('kpi-unused-count').innerText = unusedCount;
-
       // Render Categories Breakdown Bar
       const cats = {};
       APP_STATE.items.forEach(i => cats[i.cat] = (cats[i.cat] || 0) + 1);
@@ -1466,7 +2056,7 @@
           <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder shadow-sm flex flex-col justify-between h-48 space-y-2">
             <div class="flex items-center justify-between border-b border-warmBorder pb-2">
               <span class="font-bold text-sm text-charcoal">${day}</span>
-              <span class="text-[10px] text-taupe">+18°C</span>
+              <span class="text-[10px] text-taupe">+13°C</span>
             </div>
             <div class="flex-1 flex flex-col items-center justify-center text-center">
               ${plannedOutfit ? `
@@ -1507,13 +2097,125 @@
     }
 
     // Profile & Settings
+    function readNumberField(id) {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const value = el.value.trim();
+      return value === '' ? null : Number(value);
+    }
+
+    function syncProfileForm() {
+      const p = APP_STATE.profile || {};
+      const fields = {
+        'user-height': p.height ?? 168,
+        'user-weight': p.weight ?? '',
+        'user-bust': p.bust ?? '',
+        'user-waist': p.waist ?? '',
+        'user-hips': p.hips ?? '',
+        'user-foot-length': p.footLength ?? '',
+        'user-body-shape': p.bodyShape ?? 'Песочные часы',
+        'user-size': p.size ?? '',
+        'user-style-pref': p.stylePref ?? 'Casual Minimalist'
+      };
+
+      Object.entries(fields).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+      });
+
+      const api = document.getElementById('gemini-api-key');
+      if (api) api.value = p.apiKey || '';
+    }
+
     function saveProfileData() {
-      APP_STATE.profile.height = document.getElementById('user-height').value;
+      APP_STATE.profile.height = readNumberField('user-height');
+      APP_STATE.profile.weight = readNumberField('user-weight');
+      APP_STATE.profile.bust = readNumberField('user-bust');
+      APP_STATE.profile.waist = readNumberField('user-waist');
+      APP_STATE.profile.hips = readNumberField('user-hips');
+      APP_STATE.profile.footLength = readNumberField('user-foot-length');
       APP_STATE.profile.bodyShape = document.getElementById('user-body-shape').value;
-      APP_STATE.profile.size = document.getElementById('user-size').value;
+      APP_STATE.profile.size = document.getElementById('user-size').value.trim();
       APP_STATE.profile.stylePref = document.getElementById('user-style-pref').value;
       saveState();
-      showToast('Профиль обновлен');
+      showToast('Параметры профиля сохранены');
+    }
+
+    function getSizingProfile() {
+      const p = APP_STATE.profile || {};
+      return {
+        height: Number(p.height) || null,
+        weight: Number(p.weight) || null,
+        bust: Number(p.bust) || null,
+        waist: Number(p.waist) || null,
+        hips: Number(p.hips) || null,
+        footLength: Number(p.footLength) || null,
+        clothingSize: p.size || '',
+        bodyShape: p.bodyShape || '',
+        stylePref: p.stylePref || ''
+      };
+    }
+
+    // Универсальный хук для онлайн-каталога:
+    // product.sizeChart может содержать:
+    // одежда: [{ size, bust, waist, hips }]
+    // обувь:  [{ size, footLength }]
+    function recommendNetworkSize(product) {
+      const profile = getSizingProfile();
+      const chart = Array.isArray(product?.sizeChart) ? product.sizeChart : [];
+      if (!chart.length) {
+        return {
+          size: null,
+          reason: 'У товара нет размерной сетки бренда'
+        };
+      }
+
+      const isShoe = String(product?.category || product?.cat || '').toLowerCase().includes('обув');
+      const dimensions = isShoe
+        ? [['footLength', profile.footLength]]
+        : [['bust', profile.bust], ['waist', profile.waist], ['hips', profile.hips]];
+
+      const available = dimensions.filter(([, value]) => value != null);
+      if (!available.length) {
+        return {
+          size: null,
+          reason: isShoe ? 'Укажите длину стопы' : 'Укажите грудь, талию и бёдра'
+        };
+      }
+
+      let best = null;
+      let bestScore = Infinity;
+
+      chart.forEach(row => {
+        const distances = available
+          .map(([key, target]) => row[key] == null ? null : Math.abs(Number(row[key]) - target))
+          .filter(v => v != null);
+
+        if (!distances.length) return;
+
+        const score = distances.reduce((sum, value) => sum + value, 0) / distances.length;
+        if (score < bestScore) {
+          bestScore = score;
+          best = row;
+        }
+      });
+
+      return best
+        ? {
+            size: best.size ?? best.label ?? null,
+            score: Number(bestScore.toFixed(1)),
+            reason: isShoe
+              ? 'Сопоставлено по длине стопы'
+              : 'Сопоставлено по меркам груди, талии и бёдер'
+          }
+        : {
+            size: null,
+            reason: 'Размерную сетку не удалось сопоставить с профилем'
+          };
+    }
+
+    function getOnlineSizeRecommendation(product) {
+      return recommendNetworkSize(product);
     }
 
     function saveApiKey() {
