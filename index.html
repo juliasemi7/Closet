@@ -1,1 +1,1571 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JuliSemiTed Closet</title>
 
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            linen: '#FAF7F2',
+            sand: '#F4EFEA',
+            warmCard: '#FFFFFF',
+            terracotta: '#C86D51',
+            terracottaHover: '#B25B41',
+            sage: '#7A8B7B',
+            sageLight: '#E8EFE9',
+            charcoal: '#202020',
+            taupe: '#78716C',
+            warmBorder: '#E7E0D8'
+          },
+          fontFamily: {
+            serif: ['Playfair Display', 'serif'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      background-color: #FAF7F2;
+      color: #202020;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    h1, h2, h3, .font-serif {
+      font-family: 'Playfair Display', serif;
+    }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #FAF7F2;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #E7E0D8;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #C86D51;
+    }
+
+    .canvas-grid {
+      background-size: 24px 24px;
+      background-image: radial-gradient(circle, #E7E0D8 1.2px, transparent 1.2px);
+    }
+
+    .glass-nav {
+      background: rgba(250, 247, 242, 0.90);
+      backdrop-filter: blur(16px);
+    }
+
+    .card-hover {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    }
+
+    .canvas-element {
+      user-select: none;
+      touch-action: none;
+    }
+    .canvas-element.selected {
+      outline: 2px dashed #C86D51;
+      outline-offset: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col pb-24 md:pb-0 md:pl-64 antialiased">
+
+  <!-- Navigation Sidebar (Desktop) / Bottom Nav (Mobile) -->
+  <aside class="fixed bottom-0 left-0 right-0 z-40 md:top-0 md:right-auto md:w-64 glass-nav border-t md:border-t-0 md:border-r border-warmBorder flex md:flex-col justify-between p-2 md:p-6 transition-all duration-300">
+    <div>
+      <!-- Brand Logo -->
+      <div class="hidden md:flex items-center gap-3 mb-8 px-2">
+        <div class="w-10 h-10 rounded-2xl bg-terracotta text-white flex items-center justify-center font-serif text-xl font-bold shadow-md shadow-terracotta/20">
+          J
+        </div>
+        <div>
+          <h1 class="font-serif text-lg font-bold tracking-tight text-charcoal">JuliSemiTed</h1>
+          <p class="text-[11px] text-taupe font-medium tracking-wide">CLOSET & STYLIST</p>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="flex md:flex-col justify-around md:justify-start w-full gap-1 md:gap-1.5">
+        <button onclick="switchTab('wardrobe')" id="nav-wardrobe" class="nav-btn active flex flex-col md:flex-row items-center gap-1 md:gap-3 px-3 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-all text-terracotta bg-sand">
+          <i data-lucide="shirt" class="w-5 h-5"></i>
+          <span>Гардероб</span>
+        </button>
+
+        <button onclick="switchTab('canvas')" id="nav-canvas" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-3 px-3 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-all text-taupe hover:text-charcoal hover:bg-sand/60">
+          <i data-lucide="layout-grid" class="w-5 h-5"></i>
+          <span>Холст и Луки</span>
+        </button>
+
+        <button onclick="switchTab('stylist')" id="nav-stylist" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-3 px-3 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-all text-taupe hover:text-charcoal hover:bg-sand/60 relative">
+          <i data-lucide="sparkles" class="w-5 h-5 text-terracotta"></i>
+          <span>AI Стилист</span>
+        </button>
+
+        <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-3 px-3 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-all text-taupe hover:text-charcoal hover:bg-sand/60">
+          <i data-lucide="pie-chart" class="w-5 h-5"></i>
+          <span>Аналитика</span>
+        </button>
+
+        <button onclick="switchTab('calendar')" id="nav-calendar" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-3 px-3 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-all text-taupe hover:text-charcoal hover:bg-sand/60">
+          <i data-lucide="calendar" class="w-5 h-5"></i>
+          <span>Календарь</span>
+        </button>
+
+        <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn flex flex-col md:flex-row items-center gap-1 md:gap-3 px-3 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-medium transition-all text-taupe hover:text-charcoal hover:bg-sand/60">
+          <i data-lucide="user-check" class="w-5 h-5"></i>
+          <span>Профиль & Палитра</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Weather & System Status (Desktop Bottom) -->
+    <div class="hidden md:block pt-4 border-t border-warmBorder space-y-3">
+      <div class="bg-linen p-3 rounded-2xl border border-warmBorder flex items-center justify-between">
+        <div>
+          <p class="text-[10px] text-taupe font-medium uppercase tracking-wider">Погода за окном</p>
+          <p id="weather-desc" class="text-xs font-semibold text-charcoal mt-0.5">+18°C, Ясно</p>
+        </div>
+        <i data-lucide="sun" class="w-5 h-5 text-amber-500"></i>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-taupe px-1">
+        <span class="text-[11px]">Движок AI</span>
+        <span id="api-status-badge" class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Активен
+        </span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Application Container -->
+  <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: WARDROBE (ГАРДЕРОБ) -->
+    <!-- ========================================== -->
+    <section id="tab-wardrobe" class="tab-content block space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-charcoal">Мой Гардероб</h2>
+          <p class="text-xs md:text-sm text-taupe mt-1">Оцифровано вещей: <span id="stat-total-count" class="font-semibold text-charcoal">0</span> • Капитализация шкафа: <span id="stat-total-value" class="font-semibold text-charcoal">0 ₽</span></p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="openModal('modal-add-item')" class="flex items-center gap-2 px-4 py-2.5 bg-terracotta hover:bg-terracottaHover text-white rounded-xl shadow-sm text-xs md:text-sm font-medium transition-all">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Добавить вещь</span>
+          </button>
+          <button onclick="loadStarterKit()" class="px-3.5 py-2.5 bg-sand hover:bg-warmBorder text-charcoal rounded-xl text-xs md:text-sm font-medium transition-all flex items-center gap-1.5">
+            <i data-lucide="package-plus" class="w-4 h-4 text-terracotta"></i>
+            <span>Базовый капсульный сет</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters & Search Bar -->
+      <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder shadow-sm space-y-3">
+        <div class="flex flex-col md:flex-row gap-3">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3 text-taupe"></i>
+            <input type="text" id="wardrobe-search" oninput="filterWardrobe()" placeholder="Поиск по названию, цвету, бренду..." class="w-full pl-10 pr-4 py-2 bg-linen rounded-xl border border-warmBorder text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-terracotta/40">
+          </div>
+          <select id="wardrobe-season-filter" onchange="filterWardrobe()" class="px-3 py-2 bg-linen rounded-xl border border-warmBorder text-xs md:text-sm focus:outline-none text-charcoal">
+            <option value="all">Все сезоны</option>
+            <option value="Лето">Лето</option>
+            <option value="Осень">Осень</option>
+            <option value="Зима">Зима</option>
+            <option value="Весна">Весна</option>
+            <option value="Демисезон">Демисезон</option>
+            <option value="Всесезон">Всесезон</option>
+          </select>
+          <select id="wardrobe-sort" onchange="filterWardrobe()" class="px-3 py-2 bg-linen rounded-xl border border-warmBorder text-xs md:text-sm focus:outline-none text-charcoal">
+            <option value="newest">Сначала новые</option>
+            <option value="wears">По носке (часто)</option>
+            <option value="price">По цене</option>
+          </select>
+        </div>
+
+        <!-- Category Pills -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-medium no-scrollbar">
+          <button onclick="setCategoryFilter('all')" class="cat-pill active px-3.5 py-1.5 rounded-full bg-charcoal text-white transition-all whitespace-nowrap">Все категории</button>
+          <button onclick="setCategoryFilter('Верх')" class="cat-pill px-3.5 py-1.5 rounded-full bg-linen text-taupe hover:text-charcoal border border-warmBorder transition-all whitespace-nowrap">Верх (Топы, Рубашки)</button>
+          <button onclick="setCategoryFilter('Низ')" class="cat-pill px-3.5 py-1.5 rounded-full bg-linen text-taupe hover:text-charcoal border border-warmBorder transition-all whitespace-nowrap">Низ (Брюки, Юбки)</button>
+          <button onclick="setCategoryFilter('Платья')" class="cat-pill px-3.5 py-1.5 rounded-full bg-linen text-taupe hover:text-charcoal border border-warmBorder transition-all whitespace-nowrap">Платья & Костюмы</button>
+          <button onclick="setCategoryFilter('Верхняя одежда')" class="cat-pill px-3.5 py-1.5 rounded-full bg-linen text-taupe hover:text-charcoal border border-warmBorder transition-all whitespace-nowrap">Верхняя одежда</button>
+          <button onclick="setCategoryFilter('Обувь')" class="cat-pill px-3.5 py-1.5 rounded-full bg-linen text-taupe hover:text-charcoal border border-warmBorder transition-all whitespace-nowrap">Обувь</button>
+          <button onclick="setCategoryFilter('Аксессуары')" class="cat-pill px-3.5 py-1.5 rounded-full bg-linen text-taupe hover:text-charcoal border border-warmBorder transition-all whitespace-nowrap">Аксессуары & Сумки</button>
+        </div>
+      </div>
+
+      <!-- Wardrobe Items Grid -->
+      <div id="wardrobe-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <!-- Dynamically rendered items -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: CANVAS & OUTFITS (ХОЛСТ И ЛУКИ) -->
+    <!-- ========================================== -->
+    <section id="tab-canvas" class="tab-content hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-charcoal">Интерактивный Холст Образов</h2>
+          <p class="text-xs md:text-sm text-taupe mt-1">Собирайте визуальные коллажи, сочетайте текстуры и цвета</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="saveCanvasOutfit()" class="px-4 py-2.5 bg-terracotta hover:bg-terracottaHover text-white rounded-xl text-xs md:text-sm font-medium flex items-center gap-2 shadow-sm">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Сохранить лук</span>
+          </button>
+          <button onclick="clearCanvas()" class="px-3.5 py-2.5 bg-sand text-charcoal hover:bg-warmBorder rounded-xl text-xs md:text-sm font-medium">
+            Очистить
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Canvas Studio Area (Left 8 cols) -->
+        <div class="lg:col-span-8 space-y-3">
+          <div id="canvas-area" class="relative w-full h-[500px] bg-warmCard rounded-3xl border-2 border-dashed border-warmBorder canvas-grid overflow-hidden shadow-inner flex items-center justify-center">
+            <div id="canvas-placeholder" class="text-center p-6 pointer-events-none">
+              <i data-lucide="layout-template" class="w-12 h-12 text-taupe/40 mx-auto mb-2"></i>
+              <p class="text-xs md:text-sm font-medium text-taupe">Нажмите на вещи справа, чтобы добавить их на холст</p>
+              <p class="text-[11px] text-taupe/70 mt-1">Перетаскивайте, изменяйте размер и наслоение элементов</p>
+            </div>
+            <!-- Canvas Dropped Elements will live here -->
+          </div>
+
+          <!-- Canvas Active Element Controls -->
+          <div id="canvas-controls" class="hidden bg-warmCard p-3 rounded-2xl border border-warmBorder flex items-center justify-between gap-2 text-xs">
+            <span class="font-medium text-charcoal">Управление элементом:</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="scaleActiveCanvasItem(1.15)" class="p-2 bg-linen hover:bg-sand rounded-xl" title="Увеличить"><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
+              <button onclick="scaleActiveCanvasItem(0.85)" class="p-2 bg-linen hover:bg-sand rounded-lg" title="Уменьшить"><i data-lucide="zoom-out" class="w-4 h-4"></i></button>
+              <button onclick="rotateActiveCanvasItem(15)" class="p-2 bg-linen hover:bg-sand rounded-lg" title="Повернуть"><i data-lucide="rotate-cw" class="w-4 h-4"></i></button>
+              <button onclick="bringActiveCanvasItemToFront()" class="p-2 bg-linen hover:bg-sand rounded-lg" title="На передний план"><i data-lucide="layers" class="w-4 h-4"></i></button>
+              <button onclick="removeActiveCanvasItem()" class="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg" title="Удалить"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Wardrobe Selector (Right 4 cols) -->
+        <div class="lg:col-span-4 bg-warmCard p-4 rounded-3xl border border-warmBorder space-y-3 h-[540px] flex flex-col">
+          <h3 class="font-bold text-sm text-charcoal flex items-center justify-between">
+            <span>Каталог вещей</span>
+            <span class="text-[10px] font-normal text-taupe">Клик добавляет на холст</span>
+          </h3>
+          <div id="canvas-item-picker" class="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pr-1">
+            <!-- Items rendered here for fast clicking -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Saved Outfits Section -->
+      <div class="pt-6 border-t border-warmBorder">
+        <h3 class="font-serif text-xl font-bold text-charcoal mb-4">Сохранённые Коллажи и Луки</h3>
+        <div id="saved-outfits-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <!-- Rendered outfits -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: AI STYLIST SUITE (AI СТИЛИСТ) -->
+    <!-- ========================================== -->
+    <section id="tab-stylist" class="tab-content hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-charcoal">AI Лаборатория Стиля</h2>
+          <p class="text-xs md:text-sm text-taupe mt-1">Оцифровка референсов, генерация комплектов, виртуальная примерка и аналитика</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openModal('modal-chat')" class="px-4 py-2.5 bg-terracotta text-white hover:bg-terracottaHover rounded-xl text-xs md:text-sm font-medium flex items-center gap-2 shadow-sm">
+            <i data-lucide="message-square" class="w-4 h-4"></i>
+            <span>Чат со Стилистом</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- AI Suite Grid Navigation Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <!-- Tool 1: Outfit Shazam (Reference Matcher) -->
+        <div class="bg-warmCard p-5 rounded-3xl border border-warmBorder card-hover flex flex-col justify-between space-y-4">
+          <div>
+            <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mb-3">
+              <i data-lucide="camera" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-base text-charcoal">Outfit Shazam / Референс</h3>
+            <p class="text-xs text-taupe mt-1">Загрузите фото из Pinterest или Instagram. ИИ разберет лук и подберет точные аналоги из вашего шкафа.</p>
+          </div>
+          <button onclick="openModal('modal-shazam')" class="w-full py-2.5 bg-sand hover:bg-warmBorder text-charcoal rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
+            <span>Распознать референс</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Tool 2: AI Smart Generator -->
+        <div class="bg-warmCard p-5 rounded-3xl border border-warmBorder card-hover flex flex-col justify-between space-y-4">
+          <div>
+            <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-800 flex items-center justify-center mb-3">
+              <i data-lucide="wand-2" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-base text-charcoal">Генератор Образов по Поводу</h3>
+            <p class="text-xs text-taupe mt-1">Укажите повод и погоду — ИИ мгновенно соберет гармоничный комплект из имеющихся вещей.</p>
+          </div>
+          <button onclick="openModal('modal-ai-generator')" class="w-full py-2.5 bg-terracotta text-white hover:bg-terracottaHover rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
+            <span>Сгенерировать комплект</span>
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Tool 3: Virtual Try-On -->
+        <div class="bg-warmCard p-5 rounded-3xl border border-warmBorder card-hover flex flex-col justify-between space-y-4">
+          <div>
+            <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center mb-3">
+              <i data-lucide="user-plus" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-base text-charcoal">Виртуальная Примерка</h3>
+            <p class="text-xs text-taupe mt-1">Посмотрите, как выбранный комплект будет смотреться на вашей фигуре по имеющимся параметрам.</p>
+          </div>
+          <button onclick="openModal('modal-tryon')" class="w-full py-2.5 bg-sand hover:bg-warmBorder text-charcoal rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
+            <span>Примерить на себе</span>
+            <i data-lucide="eye" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Tool 4: Capsule Wardrobe Builder -->
+        <div class="bg-warmCard p-5 rounded-3xl border border-warmBorder card-hover flex flex-col justify-between space-y-4">
+          <div>
+            <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center mb-3">
+              <i data-lucide="box" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-base text-charcoal">Умные Капсулы 10x10</h3>
+            <p class="text-xs text-taupe mt-1">Сгруппируйте ключевые вещи в универсальную капсулу для поездки с множеством комбинаций.</p>
+          </div>
+          <button onclick="generateCapsule()" class="w-full py-2.5 bg-sand hover:bg-warmBorder text-charcoal rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
+            <span>Собрать капсулу</span>
+            <i data-lucide="layers" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Tool 5: Wardrobe Gaps & Shopping List -->
+        <div class="bg-warmCard p-5 rounded-3xl border border-warmBorder card-hover flex flex-col justify-between space-y-4">
+          <div>
+            <div class="w-10 h-10 rounded-2xl bg-purple-100 text-purple-800 flex items-center justify-center mb-3">
+              <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-base text-charcoal">Пробелы и Шопинг-лист</h3>
+            <p class="text-xs text-taupe mt-1">ИИ проанализирует гардероб и покажет, какие вещи докупить для максимального количества комбинаций.</p>
+          </div>
+          <button onclick="analyzeGaps()" class="w-full py-2.5 bg-sand hover:bg-warmBorder text-charcoal rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
+            <span>Анализ пробелов</span>
+            <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Tool 6: Color Type Scanner -->
+        <div class="bg-warmCard p-5 rounded-3xl border border-warmBorder card-hover flex flex-col justify-between space-y-4">
+          <div>
+            <div class="w-10 h-10 rounded-2xl bg-sky-100 text-sky-800 flex items-center justify-center mb-3">
+              <i data-lucide="palette" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-bold text-base text-charcoal">Анализ Цветотипа по Селфи</h3>
+            <p class="text-xs text-taupe mt-1">Сканирование подтона кожи, глаз и волос для идеального подбора палитры.</p>
+          </div>
+          <button onclick="switchTab('profile')" class="w-full py-2.5 bg-sand hover:bg-warmBorder text-charcoal rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
+            <span>Перейти к анализу</span>
+            <i data-lucide="scan-face" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- AI Interactive Results Output Box -->
+      <div id="ai-results-output" class="hidden bg-warmCard p-6 rounded-3xl border border-warmBorder shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-warmBorder pb-3">
+          <h3 id="ai-output-title" class="font-serif text-lg font-bold text-charcoal">Результат анализа AI</h3>
+          <button onclick="document.getElementById('ai-results-output').classList.add('hidden')" class="text-taupe hover:text-charcoal"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div id="ai-output-content" class="text-xs md:text-sm text-charcoal space-y-3 leading-relaxed">
+          <!-- Dynamic Content -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: ANALYTICS (АНАЛИТИКА) -->
+    <!-- ========================================== -->
+    <section id="tab-analytics" class="tab-content hidden space-y-6">
+      <div>
+        <h2 class="text-2xl md:text-3xl font-bold text-charcoal">Аналитика Гардероба</h2>
+        <p class="text-xs md:text-sm text-taupe mt-1">Метрики эффективности, стоимость носки (CPW) и частота использования</p>
+      </div>
+
+      <!-- Key KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder shadow-sm">
+          <p class="text-xs text-taupe font-medium">Общая стоимость</p>
+          <p id="kpi-total-val" class="text-xl font-bold text-charcoal mt-1">0 ₽</p>
+          <p class="text-[10px] text-emerald-600 mt-1 flex items-center gap-1"><i data-lucide="check-circle" class="w-3 h-3"></i> Капитализация шкафа</p>
+        </div>
+        <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder shadow-sm">
+          <p class="text-xs text-taupe font-medium">Средняя CPW</p>
+          <p id="kpi-avg-cpw" class="text-xl font-bold text-charcoal mt-1">0 ₽/выход</p>
+          <p class="text-[10px] text-taupe mt-1">Стоимость одного выхода</p>
+        </div>
+        <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder shadow-sm">
+          <p class="text-xs text-taupe font-medium">Любимая вещь</p>
+          <p id="kpi-top-item" class="text-sm font-bold text-charcoal mt-1 line-clamp-1">—</p>
+          <p id="kpi-top-wears" class="text-[10px] text-terracotta mt-1">0 носок</p>
+        </div>
+        <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder shadow-sm">
+          <p class="text-xs text-taupe font-medium">Забытые вещи</p>
+          <p id="kpi-unused-count" class="text-xl font-bold text-charcoal mt-1">0</p>
+          <p class="text-[10px] text-amber-600 mt-1">Редко надеваются</p>
+        </div>
+      </div>
+
+      <!-- Analytics Visual Breakdowns -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Category Distribution -->
+        <div class="bg-warmCard p-5 rounded-3xl border border-warmBorder shadow-sm space-y-3">
+          <h3 class="font-serif text-base font-bold text-charcoal">Распределение по категориям</h3>
+          <div id="analytics-categories-bar" class="space-y-2 text-xs">
+            <!-- Dynamically populated bars -->
+          </div>
+        </div>
+
+        <!-- Smart Recommendations based on Analytics -->
+        <div class="bg-warmCard p-5 rounded-3xl border border-warmBorder shadow-sm space-y-3">
+          <h3 class="font-serif text-base font-bold text-charcoal flex items-center gap-2">
+            <i data-lucide="lightbulb" class="w-4 h-4 text-terracotta"></i>
+            <span>Советы по оптимизации гардероба</span>
+          </h3>
+          <div id="analytics-insights-list" class="space-y-2 text-xs text-taupe">
+            <p class="p-3 bg-linen rounded-2xl border border-warmBorder text-charcoal">
+              💡 Добавляйте цены и количество носок у вещей, чтобы видеть точную окупаемость каждого выхода.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: CALENDAR (КАЛЕНДАРЬ НЕДЕЛИ) -->
+    <!-- ========================================== -->
+    <section id="tab-calendar" class="tab-content hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-charcoal">Планировщик Недели</h2>
+          <p class="text-xs md:text-sm text-taupe mt-1">Назначьте образ на каждый день и забудьте о проблеме «нечего надеть»</p>
+        </div>
+        <button onclick="autoPlanWeek()" class="px-4 py-2.5 bg-terracotta text-white hover:bg-terracottaHover rounded-xl text-xs md:text-sm font-medium flex items-center gap-2 shadow-sm">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Спланировать неделю с AI</span>
+        </button>
+      </div>
+
+      <!-- Days Grid (Mon - Sun) -->
+      <div id="weekly-calendar-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 6: PROFILE & COLOR ANALYSIS (ПРОФИЛЬ) -->
+    <!-- ========================================== -->
+    <section id="tab-profile" class="tab-content hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-charcoal">Профиль & Цветотип</h2>
+          <p class="text-xs md:text-sm text-taupe mt-1">Персонализация под тип фигуры, параметры и сезонную палитру</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- User Parameters & Body Type (Left 6) -->
+        <div class="lg:col-span-6 bg-warmCard p-6 rounded-3xl border border-warmBorder shadow-sm space-y-4">
+          <h3 class="font-serif text-lg font-bold text-charcoal flex items-center gap-2">
+            <i data-lucide="sliders" class="w-5 h-5 text-terracotta"></i>
+            <span>Параметры и Фигура</span>
+          </h3>
+
+          <div class="grid grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block text-taupe mb-1">Рост (см)</label>
+              <input type="number" id="user-height" value="168" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
+            </div>
+            <div>
+              <label class="block text-taupe mb-1">Тип фигуры</label>
+              <select id="user-body-shape" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
+                <option value="Песочные часы">Песочные часы</option>
+                <option value="Прямоугольник">Прямоугольник</option>
+                <option value="Груша (А-силуэт)">Груша (А-силуэт)</option>
+                <option value="Перевернутый треугольник">Перевернутый треугольник</option>
+                <option value="Яблоко (О-силуэт)">Яблоко (О-силуэт)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-taupe mb-1">Размер одежды</label>
+              <input type="text" id="user-size" value="S (42-44)" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
+            </div>
+            <div>
+              <label class="block text-taupe mb-1">Предпочитаемый стиль</label>
+              <select id="user-style-pref" onchange="saveProfileData()" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm font-medium">
+                <option value="Casual Minimalist">Casual Minimalist</option>
+                <option value="Old Money / Classic">Old Money / Classic</option>
+                <option value="Streetwear">Streetwear</option>
+                <option value="Business Chic">Business Chic</option>
+                <option value="Boho Chic">Boho Chic</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- API Key Section -->
+          <div class="pt-4 border-t border-warmBorder space-y-2">
+            <label class="block text-xs font-semibold text-charcoal">Gemini API Key (опционально)</label>
+            <p class="text-[11px] text-taupe">Включение ключа позволяет отправлять прямые запросы к AI-модели Gemini.</p>
+            <div class="flex gap-2">
+              <input type="password" id="gemini-api-key" placeholder="AIzaSy..." class="flex-1 p-2 bg-linen rounded-xl border border-warmBorder text-xs">
+              <button onclick="saveApiKey()" class="px-3 py-2 bg-sand text-charcoal font-semibold rounded-xl text-xs hover:bg-warmBorder">Сохранить</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Color Type & Palette Section (Right 6) -->
+        <div class="lg:col-span-6 bg-warmCard p-6 rounded-3xl border border-warmBorder shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-serif text-lg font-bold text-charcoal flex items-center gap-2">
+              <i data-lucide="palette" class="w-5 h-5 text-terracotta"></i>
+              <span>Мой Цветотип</span>
+            </h3>
+            <button onclick="runColorAnalysis()" class="px-3.5 py-1.5 bg-terracotta text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="scan" class="w-3.5 h-3.5"></i>
+              <span>Анализ палитры</span>
+            </button>
+          </div>
+
+          <div id="colortype-card-body" class="space-y-3">
+            <div class="flex items-center gap-4 bg-linen p-4 rounded-2xl border border-warmBorder">
+              <div class="w-12 h-12 rounded-full bg-amber-200 border-2 border-white shadow-sm flex items-center justify-center font-serif font-bold text-amber-900">
+                МО
+              </div>
+              <div>
+                <p class="font-bold text-sm text-charcoal" id="profile-colortype-title">Мягкая Осень (Soft Autumn)</p>
+                <p class="text-xs text-taupe mt-0.5">Теплый, приглушенный подтон. Идеальны бежевый, терракотовый, шалфейный.</p>
+              </div>
+            </div>
+
+            <p class="text-xs font-semibold text-charcoal mt-2">Рекомендуемая персональная палитра:</p>
+            <div class="grid grid-cols-6 gap-2" id="profile-color-palette">
+              <div class="h-10 rounded-xl bg-[#C86D51] shadow-inner" title="#C86D51 - Terracotta"></div>
+              <div class="h-10 rounded-xl bg-[#7A8B7B] shadow-inner" title="#7A8B7B - Sage"></div>
+              <div class="h-10 rounded-xl bg-[#FAF7F2] border border-warmBorder shadow-inner" title="#FAF7F2 - Cream"></div>
+              <div class="h-10 rounded-xl bg-[#D4A373] shadow-inner" title="#D4A373 - Warm Ochre"></div>
+              <div class="h-10 rounded-xl bg-[#4A5D4E] shadow-inner" title="#4A5D4E - Deep Forest"></div>
+              <div class="h-10 rounded-xl bg-[#2B2D42] shadow-inner" title="#2B2D42 - Dark Slate"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: ADD WARDROBE ITEM -->
+  <!-- ========================================== -->
+  <div id="modal-add-item" class="fixed inset-0 bg-charcoal/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-warmCard max-w-lg w-full rounded-3xl p-6 border border-warmBorder shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-warmBorder pb-3">
+        <h3 class="font-serif text-lg font-bold text-charcoal">Добавить вещь в гардероб</h3>
+        <button onclick="closeModal('modal-add-item')" class="text-taupe hover:text-charcoal"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <!-- File Upload Area -->
+      <div class="border-2 border-dashed border-warmBorder rounded-2xl p-6 text-center bg-linen hover:bg-sand/50 transition-all relative cursor-pointer">
+        <input type="file" id="item-file-input" accept="image/*" multiple onchange="handleImageUpload(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+        <i data-lucide="upload-cloud" class="w-10 h-10 text-terracotta mx-auto mb-2"></i>
+        <p class="text-xs md:text-sm font-semibold text-charcoal">Перетащите фото или нажмите для выбора</p>
+        <p class="text-[11px] text-taupe mt-1">Автоматическое сохранение карточки вещи</p>
+      </div>
+
+      <!-- Preview Image if available -->
+      <div id="upload-preview-container" class="hidden text-center py-2">
+        <img id="upload-preview-img" src="" class="h-28 mx-auto object-contain rounded-xl border border-warmBorder bg-linen p-1">
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-taupe mb-1">Название вещи</label>
+          <input type="text" id="new-item-title" placeholder="Например: Шерстяной пиджак Oversize" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-taupe mb-1">Категория</label>
+            <select id="new-item-cat" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm">
+              <option value="Верх">Верх</option>
+              <option value="Низ">Низ</option>
+              <option value="Платья">Платья & Костюмы</option>
+              <option value="Верхняя одежда">Верхняя одежда</option>
+              <option value="Обувь">Обувь</option>
+              <option value="Аксессуары">Аксессуары</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-taupe mb-1">Сезон</label>
+            <select id="new-item-season" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm">
+              <option value="Демисезон">Демисезон</option>
+              <option value="Лето">Лето</option>
+              <option value="Зима">Зима</option>
+              <option value="Всесезон">Всесезон</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-taupe mb-1">Бренд</label>
+            <input type="text" id="new-item-brand" placeholder="ZARA, Massimo Dutti..." class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm">
+          </div>
+          <div>
+            <label class="block text-taupe mb-1">Стоимость (₽)</label>
+            <input type="number" id="new-item-price" placeholder="12000" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('modal-add-item')" class="px-4 py-2 bg-sand text-charcoal rounded-xl text-xs font-semibold">Отмена</button>
+        <button onclick="saveNewItem()" class="px-5 py-2 bg-terracotta text-white hover:bg-terracottaHover rounded-xl text-xs font-semibold shadow-sm">Сохранить вещь</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: OUTFIT SHAZAM / REFERENCE MATCH -->
+  <div id="modal-shazam" class="fixed inset-0 bg-charcoal/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-warmCard max-w-lg w-full rounded-3xl p-6 border border-warmBorder shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-warmBorder pb-3">
+        <h3 class="font-serif text-lg font-bold text-charcoal">Outfit Shazam (Поиск по референсу)</h3>
+        <button onclick="closeModal('modal-shazam')" class="text-taupe hover:text-charcoal"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <p class="text-xs text-taupe">Загрузите скриншот образов из Pinterest или соцсетей. ИИ сопоставит стилистику с вашим гардеробом.</p>
+      
+      <div class="border-2 border-dashed border-warmBorder rounded-2xl p-4 text-center bg-linen">
+        <input type="file" id="shazam-file-input" accept="image/*" class="w-full text-xs text-taupe">
+      </div>
+
+      <button onclick="runOutfitShazam()" class="w-full py-2.5 bg-terracotta text-white rounded-xl text-xs font-semibold hover:bg-terracottaHover transition-all flex items-center justify-center gap-2">
+        <i data-lucide="scan" class="w-4 h-4"></i>
+        <span>Распознать и сопоставить</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 3: AI OUTFIT GENERATOR -->
+  <div id="modal-ai-generator" class="fixed inset-0 bg-charcoal/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-warmCard max-w-lg w-full rounded-3xl p-6 border border-warmBorder shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-warmBorder pb-3">
+        <h3 class="font-serif text-lg font-bold text-charcoal">Генератор Образов</h3>
+        <button onclick="closeModal('modal-ai-generator')" class="text-taupe hover:text-charcoal"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-taupe mb-1">Повод</label>
+          <select id="gen-occasion" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm">
+            <option value="Работа / Офис">Работа / Офис (Smart Casual)</option>
+            <option value="Прогулка в парке">Прогулка в парке</option>
+            <option value="Свидание / Вечер">Свидание / Вечерний выезд</option>
+            <option value="Встреча с подругами">Встреча с подругами / Кафе</option>
+            <option value="Перелет / Путешествие">Перелет / Путешествие</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-taupe mb-1">Погода и Температура</label>
+          <input type="text" id="gen-weather" value="+18°C, Переменная облачность" class="w-full p-2.5 bg-linen rounded-xl border border-warmBorder text-sm">
+        </div>
+      </div>
+      <button onclick="runAiGenerator()" class="w-full py-2.5 bg-terracotta text-white rounded-xl text-xs font-semibold hover:bg-terracottaHover flex items-center justify-center gap-2">
+        <i data-lucide="sparkles" class="w-4 h-4"></i>
+        <span>Сгенерировать комплект</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 4: VIRTUAL TRY-ON -->
+  <div id="modal-tryon" class="fixed inset-0 bg-charcoal/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-warmCard max-w-lg w-full rounded-3xl p-6 border border-warmBorder shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-warmBorder pb-3">
+        <h3 class="font-serif text-lg font-bold text-charcoal">Виртуальная Примерка</h3>
+        <button onclick="closeModal('modal-tryon')" class="text-taupe hover:text-charcoal"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <p class="text-xs text-taupe">Выберите комплект и примерите его симулятором фигуры по параметрам из профиля.</p>
+      <div>
+        <label class="block text-xs text-taupe mb-1">Фото в полный рост (опционально)</label>
+        <input type="file" id="tryon-user-file" accept="image/*" class="w-full text-xs">
+      </div>
+      <button onclick="runVirtualTryOn()" class="w-full py-2.5 bg-terracotta text-white rounded-xl text-xs font-semibold hover:bg-terracottaHover">
+        Симулировать примерку
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 5: CHAT WITH STYLIST -->
+  <div id="modal-chat" class="fixed inset-0 bg-charcoal/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-warmCard max-w-md w-full rounded-3xl p-6 border border-warmBorder shadow-2xl space-y-4 flex flex-col h-[520px]">
+      <div class="flex items-center justify-between border-b border-warmBorder pb-3">
+        <h3 class="font-serif text-lg font-bold text-charcoal flex items-center gap-2">
+          <i data-lucide="bot" class="w-5 h-5 text-terracotta"></i>
+          <span>Стилист JuliSemiTed</span>
+        </h3>
+        <button onclick="closeModal('modal-chat')" class="text-taupe hover:text-charcoal"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div id="chat-messages" class="flex-1 overflow-y-auto space-y-3 text-xs pr-1">
+        <div class="bg-linen p-3.5 rounded-2xl border border-warmBorder text-charcoal max-w-[88%] leading-relaxed">
+          Здравствуйте! Я ваш персональный стилист JuliSemiTed Closet. Чем помочь вам сегодня?
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex gap-1 overflow-x-auto pb-1 text-[10px] no-scrollbar">
+          <button onclick="quickChat('Что надеть на собеседование?')" class="px-2.5 py-1 bg-sand rounded-full text-charcoal whitespace-nowrap hover:bg-warmBorder">Что надеть в офис?</button>
+          <button onclick="quickChat('Как сочетать зеленый с другими цветами?')" class="px-2.5 py-1 bg-sand rounded-full text-charcoal whitespace-nowrap hover:bg-warmBorder">Сочетания цветов</button>
+        </div>
+
+        <div class="flex gap-2">
+          <input type="text" id="chat-input" placeholder="Напишите вопрос..." onkeypress="if(event.key==='Enter') sendChatMessage()" class="flex-1 p-2.5 bg-linen rounded-xl border border-warmBorder text-xs focus:outline-none focus:ring-2 focus:ring-terracotta/40">
+          <button onclick="sendChatMessage()" class="p-2.5 bg-terracotta text-white rounded-xl hover:bg-terracottaHover">
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- APPLICATION LOGIC & STATE MANAGEMENT -->
+  <script>
+    // State Store
+    const APP_STATE = {
+      items: [],
+      outfits: [],
+      calendar: {},
+      profile: {
+        height: 168,
+        bodyShape: 'Песочные часы',
+        size: 'S (42-44)',
+        stylePref: 'Casual Minimalist',
+        colorType: 'Мягкая Осень (Soft Autumn)',
+        apiKey: ''
+      },
+      currentCategory: 'all',
+      canvasItems: [],
+      selectedCanvasItemId: null
+    };
+
+    // Starter Wardrobe Data
+    const STARTER_ITEMS = [
+      {
+        id: 'item-1',
+        title: 'Бежевый Oversize Пиджак',
+        cat: 'Верхняя одежда',
+        color: 'Бежевый',
+        season: 'Демисезон',
+        brand: 'Massimo Dutti',
+        price: 18000,
+        wears: 14,
+        img: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'item-2',
+        title: 'Шелковая Топ-Рубашка',
+        cat: 'Верх',
+        color: 'Молочный',
+        season: 'Всесезон',
+        brand: 'ZARA',
+        price: 4500,
+        wears: 22,
+        img: 'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=400&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'item-3',
+        title: 'Прямые Джинсы High-Waist',
+        cat: 'Низ',
+        color: 'Синий',
+        season: 'Всесезон',
+        brand: 'Mango',
+        price: 5900,
+        wears: 30,
+        img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=400&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'item-4',
+        title: 'Кожаные Лоферы',
+        cat: 'Обувь',
+        color: 'Черный',
+        season: 'Демисезон',
+        brand: '12 Storeez',
+        price: 14900,
+        wears: 18,
+        img: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'item-5',
+        title: 'Кашемировый Джемпер',
+        cat: 'Верх',
+        color: 'Шалфейный',
+        season: 'Осень',
+        brand: 'COS',
+        price: 12000,
+        wears: 8,
+        img: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'item-6',
+        title: 'Классические Брюки со Стрелками',
+        cat: 'Низ',
+        color: 'Темно-серый',
+        season: 'Демисезон',
+        brand: 'Lime',
+        price: 6900,
+        wears: 12,
+        img: 'https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?w=400&auto=format&fit=crop&q=80'
+      }
+    ];
+
+    // Initialize App
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      if (APP_STATE.items.length === 0) {
+        APP_STATE.items = [...STARTER_ITEMS];
+        saveState();
+      }
+      renderWardrobe();
+      renderCanvasPicker();
+      renderSavedOutfits();
+      renderAnalytics();
+      renderCalendar();
+      lucide.createIcons();
+    });
+
+    // Storage functions
+    function saveState() {
+      localStorage.setItem('julisemited_closet_state', JSON.stringify({
+        items: APP_STATE.items,
+        outfits: APP_STATE.outfits,
+        calendar: APP_STATE.calendar,
+        profile: APP_STATE.profile
+      }));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem('julisemited_closet_state');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          APP_STATE.items = parsed.items || [];
+          APP_STATE.outfits = parsed.outfits || [];
+          APP_STATE.calendar = parsed.calendar || {};
+          if (parsed.profile) APP_STATE.profile = { ...APP_STATE.profile, ...parsed.profile };
+        } catch(e) {
+          console.error(e);
+        }
+      }
+    }
+
+    // Tab Navigation
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active', 'text-terracotta', 'bg-sand');
+        btn.classList.add('text-taupe');
+      });
+
+      const activeBtn = document.getElementById(`nav-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('active', 'text-terracotta', 'bg-sand');
+        activeBtn.classList.remove('text-taupe');
+      }
+
+      if (tabId === 'analytics') renderAnalytics();
+      if (tabId === 'calendar') renderCalendar();
+      if (tabId === 'canvas') renderCanvasPicker();
+    }
+
+    // Modal Helpers
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `p-3.5 px-5 bg-charcoal text-white rounded-2xl shadow-xl text-xs font-medium transition-all duration-300 opacity-0 transform translate-y-2 flex items-center gap-2 pointer-events-auto`;
+      toast.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 text-terracotta"></i><span>${msg}</span>`;
+      const container = document.getElementById('toast-container');
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      }, 50);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Wardrobe Functions
+    function setCategoryFilter(cat) {
+      APP_STATE.currentCategory = cat;
+      document.querySelectorAll('.cat-pill').forEach(btn => {
+        btn.classList.remove('bg-charcoal', 'text-white');
+        btn.classList.add('bg-linen', 'text-taupe');
+      });
+      event.target.classList.remove('bg-linen', 'text-taupe');
+      event.target.classList.add('bg-charcoal', 'text-white');
+      filterWardrobe();
+    }
+
+    function filterWardrobe() {
+      const search = document.getElementById('wardrobe-search').value.toLowerCase();
+      const season = document.getElementById('wardrobe-season-filter').value;
+      const sort = document.getElementById('wardrobe-sort').value;
+
+      let filtered = APP_STATE.items.filter(item => {
+        const matchSearch = item.title.toLowerCase().includes(search) || 
+                            item.color.toLowerCase().includes(search) || 
+                            (item.brand && item.brand.toLowerCase().includes(search));
+        const matchCat = APP_STATE.currentCategory === 'all' || item.cat === APP_STATE.currentCategory;
+        const matchSeason = season === 'all' || item.season === season || item.season === 'Всесезон';
+        return matchSearch && matchCat && matchSeason;
+      });
+
+      if (sort === 'wears') filtered.sort((a,b) => (b.wears || 0) - (a.wears || 0));
+      if (sort === 'price') filtered.sort((a,b) => (b.price || 0) - (a.price || 0));
+      if (sort === 'newest') filtered.reverse();
+
+      renderWardrobeGrid(filtered);
+    }
+
+    function renderWardrobe() {
+      const countEl = document.getElementById('stat-total-count');
+      const valEl = document.getElementById('stat-total-value');
+      
+      const totalVal = APP_STATE.items.reduce((acc, i) => acc + (Number(i.price) || 0), 0);
+      if (countEl) countEl.innerText = APP_STATE.items.length;
+      if (valEl) valEl.innerText = totalVal.toLocaleString('ru-RU') + ' ₽';
+
+      filterWardrobe();
+    }
+
+    function renderWardrobeGrid(items) {
+      const grid = document.getElementById('wardrobe-grid');
+      if (!grid) return;
+
+      if (items.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-taupe space-y-2">
+            <i data-lucide="shirt" class="w-10 h-10 mx-auto opacity-30"></i>
+            <p class="text-sm font-medium">Вещи не найдены</p>
+            <p class="text-xs">Попробуйте изменить параметры поиска или добавить новую вещь</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      grid.innerHTML = items.map(item => `
+        <div class="bg-warmCard rounded-3xl p-3 border border-warmBorder card-hover group relative flex flex-col justify-between">
+          <div class="relative w-full aspect-square rounded-2xl bg-linen overflow-hidden mb-2.5 flex items-center justify-center p-2">
+            <img src="${item.img}" alt="${item.title}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">
+            <button onclick="deleteItem('${item.id}')" class="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-red-50 text-taupe hover:text-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-sm">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[10px] text-taupe">
+              <span>${item.cat}</span>
+              <span class="font-medium text-charcoal">${item.brand || ''}</span>
+            </div>
+            <h4 class="font-semibold text-xs text-charcoal line-clamp-1">${item.title}</h4>
+            <div class="flex items-center justify-between text-xs pt-1">
+              <span class="text-terracotta font-semibold">${item.price ? item.price.toLocaleString('ru-RU') + ' ₽' : '—'}</span>
+              <span class="text-[10px] text-taupe bg-sand px-2 py-0.5 rounded-full">${item.wears || 0} носок</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function loadStarterKit() {
+      APP_STATE.items = [...STARTER_ITEMS];
+      saveState();
+      renderWardrobe();
+      showToast('Загружен базовый капсульный сет!');
+    }
+
+    let tempUploadedImg = null;
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        tempUploadedImg = event.target.result;
+        document.getElementById('upload-preview-img').src = tempUploadedImg;
+        document.getElementById('upload-preview-container').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveNewItem() {
+      const title = document.getElementById('new-item-title').value.trim() || 'Новая вещь';
+      const cat = document.getElementById('new-item-cat').value;
+      const season = document.getElementById('new-item-season').value;
+      const brand = document.getElementById('new-item-brand').value.trim();
+      const price = Number(document.getElementById('new-item-price').value) || 0;
+
+      const newItem = {
+        id: 'item-' + Date.now(),
+        title,
+        cat,
+        season,
+        brand,
+        price,
+        color: 'Разноцветный',
+        wears: 0,
+        img: tempUploadedImg || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&auto=format&fit=crop&q=80'
+      };
+
+      APP_STATE.items.unshift(newItem);
+      saveState();
+      renderWardrobe();
+      closeModal('modal-add-item');
+      showToast('Вещь успешно добавлена в гардероб!');
+
+      // Reset form
+      document.getElementById('new-item-title').value = '';
+      document.getElementById('new-item-brand').value = '';
+      document.getElementById('new-item-price').value = '';
+      document.getElementById('upload-preview-container').classList.add('hidden');
+      tempUploadedImg = null;
+    }
+
+    function deleteItem(id) {
+      if (confirm('Удалить эту вещь из гардероба?')) {
+        APP_STATE.items = APP_STATE.items.filter(i => i.id !== id);
+        saveState();
+        renderWardrobe();
+        showToast('Вещь удалена');
+      }
+    }
+
+    // Canvas Interactive Studio
+    function renderCanvasPicker() {
+      const picker = document.getElementById('canvas-item-picker');
+      if (!picker) return;
+
+      picker.innerHTML = APP_STATE.items.map(item => `
+        <div onclick="addCanvasItem('${item.id}')" class="bg-linen p-2 rounded-2xl border border-warmBorder hover:border-terracotta cursor-pointer transition-all text-center flex flex-col items-center">
+          <img src="${item.img}" class="w-16 h-16 object-contain mb-1">
+          <p class="text-[10px] font-semibold text-charcoal line-clamp-1">${item.title}</p>
+        </div>
+      `).join('');
+    }
+
+    function addCanvasItem(itemId) {
+      const item = APP_STATE.items.find(i => i.id === itemId);
+      if (!item) return;
+
+      const placeholder = document.getElementById('canvas-placeholder');
+      if (placeholder) placeholder.style.display = 'none';
+
+      const canvasArea = document.getElementById('canvas-area');
+      const canvasElId = 'c-el-' + Date.now();
+
+      const elData = {
+        id: canvasElId,
+        itemId: item.id,
+        img: item.img,
+        title: item.title,
+        x: 50 + (APP_STATE.canvasItems.length * 20),
+        y: 50 + (APP_STATE.canvasItems.length * 20),
+        scale: 1,
+        rotation: 0,
+        zIndex: APP_STATE.canvasItems.length + 1
+      };
+
+      APP_STATE.canvasItems.push(elData);
+      renderCanvasElement(elData);
+      selectCanvasElement(canvasElId);
+    }
+
+    function renderCanvasElement(el) {
+      const canvasArea = document.getElementById('canvas-area');
+      const div = document.createElement('div');
+      div.id = el.id;
+      div.className = 'canvas-element absolute cursor-move p-2 transition-transform';
+      div.style.left = `${el.x}px`;
+      div.style.top = `${el.y}px`;
+      div.style.zIndex = el.zIndex;
+      div.style.transform = `scale(${el.scale}) rotate(${el.rotation}deg)`;
+
+      div.innerHTML = `<img src="${el.img}" class="w-28 h-28 object-contain pointer-events-none">`;
+
+      div.addEventListener('mousedown', (e) => startDragCanvasItem(e, el.id));
+      div.addEventListener('touchstart', (e) => startDragCanvasItem(e, el.id), { passive: false });
+
+      canvasArea.appendChild(div);
+    }
+
+    function selectCanvasElement(id) {
+      APP_STATE.selectedCanvasItemId = id;
+      document.querySelectorAll('.canvas-element').forEach(el => el.classList.remove('selected'));
+      const active = document.getElementById(id);
+      if (active) active.classList.add('selected');
+      document.getElementById('canvas-controls').classList.remove('hidden');
+    }
+
+    function startDragCanvasItem(e, id) {
+      e.stopPropagation();
+      selectCanvasElement(id);
+
+      const el = APP_STATE.canvasItems.find(i => i.id === id);
+      const dom = document.getElementById(id);
+      if (!el || !dom) return;
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const startX = clientX - el.x;
+      const startY = clientY - el.y;
+
+      function onMove(me) {
+        const curX = me.touches ? me.touches[0].clientX : me.clientX;
+        const curY = me.touches ? me.touches[0].clientY : me.clientY;
+        el.x = curX - startX;
+        el.y = curY - startY;
+        dom.style.left = `${el.x}px`;
+        dom.style.top = `${el.y}px`;
+      }
+
+      function onEnd() {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onEnd);
+        window.removeEventListener('touchmove', onMove);
+        window.removeEventListener('touchend', onEnd);
+      }
+
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onEnd);
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onEnd);
+    }
+
+    function scaleActiveCanvasItem(factor) {
+      const id = APP_STATE.selectedCanvasItemId;
+      const el = APP_STATE.canvasItems.find(i => i.id === id);
+      if (!el) return;
+      el.scale *= factor;
+      const dom = document.getElementById(id);
+      if (dom) dom.style.transform = `scale(${el.scale}) rotate(${el.rotation}deg)`;
+    }
+
+    function rotateActiveCanvasItem(deg) {
+      const id = APP_STATE.selectedCanvasItemId;
+      const el = APP_STATE.canvasItems.find(i => i.id === id);
+      if (!el) return;
+      el.rotation = (el.rotation + deg) % 360;
+      const dom = document.getElementById(id);
+      if (dom) dom.style.transform = `scale(${el.scale}) rotate(${el.rotation}deg)`;
+    }
+
+    function bringActiveCanvasItemToFront() {
+      const id = APP_STATE.selectedCanvasItemId;
+      const el = APP_STATE.canvasItems.find(i => i.id === id);
+      if (!el) return;
+      const maxZ = Math.max(...APP_STATE.canvasItems.map(i => i.zIndex), 0);
+      el.zIndex = maxZ + 1;
+      const dom = document.getElementById(id);
+      if (dom) dom.style.zIndex = el.zIndex;
+    }
+
+    function removeActiveCanvasItem() {
+      const id = APP_STATE.selectedCanvasItemId;
+      APP_STATE.canvasItems = APP_STATE.canvasItems.filter(i => i.id !== id);
+      const dom = document.getElementById(id);
+      if (dom) dom.remove();
+      document.getElementById('canvas-controls').classList.add('hidden');
+      if (APP_STATE.canvasItems.length === 0) {
+        document.getElementById('canvas-placeholder').style.display = 'block';
+      }
+    }
+
+    function clearCanvas() {
+      APP_STATE.canvasItems = [];
+      document.querySelectorAll('.canvas-element').forEach(el => el.remove());
+      document.getElementById('canvas-placeholder').style.display = 'block';
+      document.getElementById('canvas-controls').classList.add('hidden');
+    }
+
+    function saveCanvasOutfit() {
+      if (APP_STATE.canvasItems.length === 0) {
+        showToast('Добавьте вещи на холст перед сохранением');
+        return;
+      }
+
+      const outfit = {
+        id: 'outfit-' + Date.now(),
+        title: 'Образ №' + (APP_STATE.outfits.length + 1),
+        items: APP_STATE.canvasItems.map(i => i.title),
+        previewImgs: APP_STATE.canvasItems.map(i => i.img),
+        date: new Date().toLocaleDateString('ru-RU')
+      };
+
+      APP_STATE.outfits.unshift(outfit);
+      saveState();
+      renderSavedOutfits();
+      showToast('Лук сохранён в вашу коллекцию!');
+    }
+
+    function renderSavedOutfits() {
+      const grid = document.getElementById('saved-outfits-grid');
+      if (!grid) return;
+
+      if (APP_STATE.outfits.length === 0) {
+        grid.innerHTML = `<p class="col-span-full text-xs text-taupe py-4">У вас пока нет сохранённых образов</p>`;
+        return;
+      }
+
+      grid.innerHTML = APP_STATE.outfits.map(o => `
+        <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder space-y-3 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-xs text-charcoal">${o.title}</h4>
+            <span class="text-[10px] text-taupe">${o.date}</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1.5 bg-linen p-2 rounded-2xl">
+            ${o.previewImgs.slice(0, 3).map(img => `<img src="${img}" class="w-full h-14 object-contain">`).join('')}
+          </div>
+          <p class="text-[11px] text-taupe line-clamp-1">${o.items.join(', ')}</p>
+        </div>
+      `).join('');
+    }
+
+    // AI Actions & Modals
+    function runOutfitShazam() {
+      closeModal('modal-shazam');
+      const output = document.getElementById('ai-results-output');
+      const title = document.getElementById('ai-output-title');
+      const content = document.getElementById('ai-output-content');
+
+      title.innerText = 'Outfit Shazam — Совпадения с гардеробом';
+      content.innerHTML = `
+        <p class="font-medium text-emerald-800 bg-emerald-50 p-3 rounded-2xl border border-emerald-200">
+          ✨ Совпадение стиля: 88%. Мы нашли подходящие элементы из вашего гардероба!
+        </p>
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          ${APP_STATE.items.slice(0, 2).map(item => `
+            <div class="bg-linen p-2.5 rounded-2xl border border-warmBorder flex items-center gap-2">
+              <img src="${item.img}" class="w-12 h-12 object-contain">
+              <div>
+                <p class="font-bold text-xs text-charcoal">${item.title}</p>
+                <p class="text-[10px] text-taupe">${item.cat}</p>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      output.classList.remove('hidden');
+    }
+
+    function runAiGenerator() {
+      closeModal('modal-ai-generator');
+      const occasion = document.getElementById('gen-occasion').value;
+      const weather = document.getElementById('gen-weather').value;
+
+      const output = document.getElementById('ai-results-output');
+      const title = document.getElementById('ai-output-title');
+      const content = document.getElementById('ai-output-content');
+
+      title.innerText = `Сгенерированный образ: ${occasion}`;
+      content.innerHTML = `
+        <p class="text-xs text-taupe">Погода: ${weather} • Стилистика: ${APP_STATE.profile.stylePref}</p>
+        <div class="bg-sand p-4 rounded-2xl border border-warmBorder space-y-2">
+          <p class="font-semibold text-xs text-charcoal">Рекомендуемый сет из вашего шкафа:</p>
+          <div class="grid grid-cols-3 gap-2">
+            ${APP_STATE.items.slice(0, 3).map(item => `
+              <div class="bg-warmCard p-2 rounded-xl text-center">
+                <img src="${item.img}" class="w-14 h-14 object-contain mx-auto">
+                <p class="text-[10px] font-medium text-charcoal mt-1 line-clamp-1">${item.title}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      output.classList.remove('hidden');
+    }
+
+    function runVirtualTryOn() {
+      closeModal('modal-tryon');
+      const output = document.getElementById('ai-results-output');
+      const title = document.getElementById('ai-output-title');
+      const content = document.getElementById('ai-output-content');
+
+      title.innerText = 'Виртуальная Примерка';
+      content.innerHTML = `
+        <div class="text-center space-y-3 py-2">
+          <p class="text-xs text-taupe">Моделирование посадки под силуэт: <b>${APP_STATE.profile.bodyShape}</b> (${APP_STATE.profile.height} см)</p>
+          <div class="w-48 h-64 mx-auto bg-linen rounded-3xl border border-warmBorder flex flex-col items-center justify-center p-4">
+            <i data-lucide="user-check" class="w-12 h-12 text-terracotta mb-2"></i>
+            <p class="text-xs font-semibold text-charcoal">Симуляция завершена</p>
+            <p class="text-[10px] text-taupe mt-1">Оверсайз пиджак и брюки идеальной длины под лоферы.</p>
+          </div>
+        </div>
+      `;
+      output.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function generateCapsule() {
+      const output = document.getElementById('ai-results-output');
+      const title = document.getElementById('ai-output-title');
+      const content = document.getElementById('ai-output-content');
+
+      title.innerText = 'Умная Капсула 10x10';
+      content.innerHTML = `
+        <p class="text-xs text-taupe">Сформирована универсальная капсула из ваших вещей для 12+ стильных образов:</p>
+        <div class="grid grid-cols-4 gap-2 pt-2">
+          ${APP_STATE.items.slice(0, 4).map(item => `
+            <div class="bg-linen p-2 rounded-2xl text-center">
+              <img src="${item.img}" class="w-12 h-12 object-contain mx-auto">
+              <p class="text-[9px] font-medium text-charcoal mt-1 line-clamp-1">${item.title}</p>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      output.classList.remove('hidden');
+    }
+
+    function analyzeGaps() {
+      const output = document.getElementById('ai-results-output');
+      const title = document.getElementById('ai-output-title');
+      const content = document.getElementById('ai-output-content');
+
+      title.innerText = 'Анализ Пробелов в Гардеробе';
+      content.innerHTML = `
+        <div class="space-y-3">
+          <p class="text-xs text-taupe">Для максимальной сочетаемости вашей текущей коллекции рекомендуем добавить 2 базовые позиции:</p>
+          <div class="p-3 bg-linen rounded-2xl border border-warmBorder flex items-center justify-between">
+            <div>
+              <p class="font-bold text-xs text-charcoal">1. Белая базовая футболка из плотного хлопка</p>
+              <p class="text-[10px] text-taupe">+8 новых комбинаций с пиджаком и брюками</p>
+            </div>
+            <a href="https://www.google.com/search?q=белая+футболка+хлопок" target="_blank" class="px-3 py-1.5 bg-terracotta text-white rounded-xl text-[10px] font-semibold">Найти</a>
+          </div>
+          <div class="p-3 bg-linen rounded-2xl border border-warmBorder flex items-center justify-between">
+            <div>
+              <p class="font-bold text-xs text-charcoal">2. Кожаный ремень минималистичной формы</p>
+              <p class="text-[10px] text-taupe">Завершит стилизацию джинсов и брюк</p>
+            </div>
+            <a href="https://www.google.com/search?q=кожаный+ремень+женский" target="_blank" class="px-3 py-1.5 bg-terracotta text-white rounded-xl text-[10px] font-semibold">Найти</a>
+          </div>
+        </div>
+      `;
+      output.classList.remove('hidden');
+    }
+
+    // Analytics Rendering
+    function renderAnalytics() {
+      const totalVal = APP_STATE.items.reduce((acc, i) => acc + (Number(i.price) || 0), 0);
+      const totalWears = APP_STATE.items.reduce((acc, i) => acc + (Number(i.wears) || 0), 0);
+      const avgCpw = totalWears > 0 ? Math.round(totalVal / totalWears) : 0;
+
+      const topItem = [...APP_STATE.items].sort((a,b) => (b.wears||0) - (a.wears||0))[0];
+      const unusedCount = APP_STATE.items.filter(i => !i.wears || i.wears === 0).length;
+
+      document.getElementById('kpi-total-val').innerText = totalVal.toLocaleString('ru-RU') + ' ₽';
+      document.getElementById('kpi-avg-cpw').innerText = avgCpw.toLocaleString('ru-RU') + ' ₽/выход';
+      
+      if (topItem) {
+        document.getElementById('kpi-top-item').innerText = topItem.title;
+        document.getElementById('kpi-top-wears').innerText = `${topItem.wears || 0} носок`;
+      }
+      document.getElementById('kpi-unused-count').innerText = unusedCount;
+
+      // Render Categories Breakdown Bar
+      const cats = {};
+      APP_STATE.items.forEach(i => cats[i.cat] = (cats[i.cat] || 0) + 1);
+      const total = APP_STATE.items.length || 1;
+
+      const catBarsHtml = Object.keys(cats).map(cat => {
+        const pct = Math.round((cats[cat] / total) * 100);
+        return `
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span class="text-charcoal">${cat}</span>
+              <span class="text-taupe">${cats[cat]} шт. (${pct}%)</span>
+            </div>
+            <div class="w-full h-2.5 bg-linen rounded-full overflow-hidden border border-warmBorder">
+              <div class="h-full bg-terracotta rounded-full" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('analytics-categories-bar').innerHTML = catBarsHtml || `<p class="text-xs text-taupe">Нет данных</p>`;
+    }
+
+    // Calendar Renderer
+    function renderCalendar() {
+      const grid = document.getElementById('weekly-calendar-grid');
+      if (!grid) return;
+
+      const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+      grid.innerHTML = days.map((day, idx) => {
+        const plannedOutfit = APP_STATE.calendar[day];
+        return `
+          <div class="bg-warmCard p-4 rounded-3xl border border-warmBorder shadow-sm flex flex-col justify-between h-48 space-y-2">
+            <div class="flex items-center justify-between border-b border-warmBorder pb-2">
+              <span class="font-bold text-sm text-charcoal">${day}</span>
+              <span class="text-[10px] text-taupe">+18°C</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center justify-center text-center">
+              ${plannedOutfit ? `
+                <p class="font-semibold text-xs text-terracotta">${plannedOutfit.title}</p>
+                <p class="text-[10px] text-taupe mt-1">${plannedOutfit.desc || 'Готовый сет'}</p>
+              ` : `
+                <p class="text-[11px] text-taupe/70 font-medium">Образ не назначен</p>
+              `}
+            </div>
+            <button onclick="assignDayOutfit('${day}')" class="w-full py-1.5 bg-linen hover:bg-sand rounded-xl text-[10px] font-semibold text-charcoal transition-all">
+              ${plannedOutfit ? 'Изменить' : 'Назначить'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function autoPlanWeek() {
+      const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+      days.forEach(day => {
+        APP_STATE.calendar[day] = {
+          title: 'Smart Casual №' + (Math.floor(Math.random() * 5) + 1),
+          desc: 'Пиджак + Джинсы'
+        };
+      });
+      saveState();
+      renderCalendar();
+      showToast('Неделя автоматически спланирована!');
+    }
+
+    function assignDayOutfit(day) {
+      const title = prompt(`Введите название образа для ${day}:`, 'Городской сет');
+      if (title) {
+        APP_STATE.calendar[day] = { title, desc: 'Назначено вручную' };
+        saveState();
+        renderCalendar();
+      }
+    }
+
+    // Profile & Settings
+    function saveProfileData() {
+      APP_STATE.profile.height = document.getElementById('user-height').value;
+      APP_STATE.profile.bodyShape = document.getElementById('user-body-shape').value;
+      APP_STATE.profile.size = document.getElementById('user-size').value;
+      APP_STATE.profile.stylePref = document.getElementById('user-style-pref').value;
+      saveState();
+      showToast('Профиль обновлен');
+    }
+
+    function saveApiKey() {
+      const key = document.getElementById('gemini-api-key').value.trim();
+      APP_STATE.profile.apiKey = key;
+      saveState();
+      showToast('API ключ сохранен');
+    }
+
+    function runColorAnalysis() {
+      showToast('Анализ цветотипа обновлен!');
+    }
+
+    // Chatbot functionality
+    function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const chatMsgs = document.getElementById('chat-messages');
+
+      // User Message
+      const userDiv = document.createElement('div');
+      userDiv.className = 'bg-terracotta text-white p-3 rounded-2xl ml-auto max-w-[85%] font-medium';
+      userDiv.innerText = text;
+      chatMsgs.appendChild(userDiv);
+
+      input.value = '';
+      chatMsgs.scrollTop = chatMsgs.scrollHeight;
+
+      // Stylist Response Simulation
+      setTimeout(() => {
+        const botDiv = document.createElement('div');
+        botDiv.className = 'bg-linen p-3.5 rounded-2xl border border-warmBorder text-charcoal max-w-[88%] leading-relaxed';
+        
+        let response = `Для вашего типа фигуры (${APP_STATE.profile.bodyShape}) и стиля ${APP_STATE.profile.stylePref} я рекомендую сочетать структуру и мягкие линии.`;
+        if (text.toLowerCase().includes('офис') || text.toLowerCase().includes('собеседование')) {
+          response = 'Для работы идеально подойдет сочетание бежевого oversize пиджака и классических серых брюк с лоферами.';
+        } else if (text.toLowerCase().includes('цвет')) {
+          response = 'Ваша палитра (Мягкая Осень) отлично сочетается с терракотовыми, оливковыми и кремовыми тонами.';
+        }
+
+        botDiv.innerText = response;
+        chatMsgs.appendChild(botDiv);
+        chatMsgs.scrollTop = chatMsgs.scrollHeight;
+      }, 600);
+    }
+
+    function quickChat(q) {
+      document.getElementById('chat-input').value = q;
+      sendChatMessage();
+    }
+  </script>
+</body>
+</html>
